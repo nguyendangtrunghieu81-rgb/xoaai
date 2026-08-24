@@ -38,19 +38,16 @@ Mọi cảnh báo đều gắn với một quy tắc có thể hiểu được: 
 
 ## Cách chuyển các gợi ý trong tài liệu tham chiếu thành chức năng an toàn
 
-Các ảnh tham chiếu và bộ quy tắc diễn đạt V3 đề cập việc thay đổi nhịp câu, sửa câu mở/kết, đổi chủ thể, làm rõ cách chỉ trỏ và thêm trải nghiệm cụ thể. Phiên bản 2.0 chỉ triển khai phần có thể tự động hóa mà không bịa nội dung:
+Các ảnh tham chiếu và bộ quy tắc diễn đạt V3 đề cập việc thay đổi nhịp câu, sửa câu mở/kết, đổi chủ thể, làm rõ cách chỉ trỏ và thêm trải nghiệm cụ thể. Thử nghiệm ở phiên bản 2.0 cho thấy thay từ dựa trên mẫu có thể làm lệch sắc thái hoặc quan hệ nghĩa dù số liệu và trích dẫn vẫn còn nguyên. Phiên bản 2.1 vì vậy dùng nguyên tắc chặt hơn:
 
-- bỏ các mở đầu như “Trong bối cảnh hiện nay”, “Có thể thấy rằng”;
-- giảm sáo ngữ như “đóng vai trò vô cùng quan trọng”, “một cách hiệu quả”;
-- chuyển động từ vòng như “thực hiện việc đổi mới” về động từ trực tiếp;
-- giữ một từ nối cần thiết và bỏ các lần lặp cùng từ nối trong một đoạn;
-- tách câu dài ở ranh giới “nhưng/tuy nhiên/vì vậy/đồng thời…” khi hai vế đều đủ ý;
-- đổi nhịp câu lặp chủ thể sang cấu trúc “Nhờ…” chỉ khi quan hệ “giúp” đã có sẵn trong câu gốc;
-- giữ nguyên mức khẳng định; từ tuyệt đối và so sánh nhất chỉ được đánh dấu để người viết tự đối chiếu với bằng chứng;
-- chia đoạn quá dài tại ranh giới câu gần giữa hai cụm luận điểm;
-- bảo vệ số liệu, công thức, tên riêng, trích dẫn, URL, email, đoạn mã và thuật ngữ do người dùng khai báo;
-- quét độc lập 100 cụm diễn đạt theo khuôn và 35 cách chỉ trỏ mơ hồ;
-- làm rõ “Nghiên cứu này”, “Quan điểm này” hoặc “Điều này giúp” chỉ khi câu ngay trước đã cho biết rõ chủ thể;
+- không tự thay từ đồng nghĩa, không xóa lời dẫn và không đổi động từ chỉ dựa trên biểu thức chính quy;
+- đối chiếu toàn bộ chuỗi từ trước và sau xử lý; một từ bị mất, thêm, thay hoặc đảo vị trí đều khiến đầu ra bị chặn;
+- tách câu dài ở ranh giới “nhưng/tuy nhiên/vì vậy/đồng thời…” khi hai vế đều đủ ý, đồng thời giữ nguyên chính từ nối gốc;
+- chia đoạn quá dài tại ranh giới câu mà không thêm hoặc xóa từ;
+- giữ nguyên mức khẳng định, phạm vi, quan hệ đối chiếu, quan hệ nguyên nhân và sắc thái thận trọng;
+- bảo vệ thêm số liệu, công thức, tên riêng, trích dẫn, URL, email, đoạn mã và thuật ngữ do người dùng khai báo ở cấp ký tự;
+- quét độc lập 100 cụm diễn đạt theo khuôn và 35 cách chỉ trỏ mơ hồ nhưng chỉ đưa cảnh báo;
+- không tự gộp “Nghiên cứu này”, “Quan điểm này” hoặc “Điều này giúp”, vì việc đặt lại chủ thể có thể thay đổi quy chiếu;
 - giữ nguyên toàn bộ phần ngoài vùng bôi chọn khi người dùng chọn xử lý một phần;
 - đưa số liệu và trải nghiệm vào danh sách cần người viết xác minh, không tự tạo nội dung thay thế.
 

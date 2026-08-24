@@ -464,14 +464,14 @@
           <input id="rememberToggle" type="checkbox"> Lưu cục bộ
         </label>
         <button class="btn ghost" id="cleanBtn" type="button">Dọn định dạng an toàn</button>
-        <label class="remember-label" title="Chặn đầu ra nếu số liệu, công thức, trích dẫn hoặc nội dung được bảo vệ bị thay đổi">
-          <input id="integrityLock" type="checkbox" checked> Khóa dữ kiện
+        <label class="remember-label" title="Bắt buộc: chặn đầu ra nếu bất kỳ từ ngữ, số liệu, công thức, trích dẫn hoặc thuật ngữ nào của bản gốc bị mất hay bị thay">
+          <input id="integrityLock" type="checkbox" checked disabled> Khóa nghĩa bắt buộc
         </label>
         <label class="sr-only" for="editDepth">Mức biên tập</label>
         <select class="mode-select" id="editDepth" title="Chọn chế độ xử lý">
-          <option value="light">Mức A · Chỉnh câu</option>
-          <option value="balanced">Mức A+ · Cân bằng</option>
-          <option value="deep" selected>Mức B · Viết lại sâu</option>
+          <option value="light">Mức A · Dọn kỹ thuật</option>
+          <option value="balanced">Mức A+ · Tách câu bảo toàn</option>
+          <option value="deep" selected>Mức B · Tái cấu trúc bảo toàn</option>
           <option value="audit">Mức C · Chỉ kiểm toán</option>
         </select>
         <label class="sr-only" for="audienceMode">Người đọc mục tiêu</label>
@@ -498,11 +498,11 @@
     </section>
 
     <section class="workflow-strip" aria-label="Quy trình xử lý V3">
-      <div class="workflow-step"><strong>1</strong> Khóa dữ kiện</div>
-      <div class="workflow-step"><strong>2</strong> Sửa từ nghĩa</div>
-      <div class="workflow-step"><strong>3</strong> Đổi cấu trúc</div>
+      <div class="workflow-step"><strong>1</strong> Khóa toàn bộ từ</div>
+      <div class="workflow-step"><strong>2</strong> Dọn kỹ thuật</div>
+      <div class="workflow-step"><strong>3</strong> Tách câu / đoạn</div>
       <div class="workflow-step"><strong>4</strong> Quét 100 + 35</div>
-      <div class="workflow-step guard-ok" id="guardStatus"><strong>5</strong> Cổng bảo toàn sẵn sàng</div>
+      <div class="workflow-step guard-ok" id="guardStatus"><strong>5</strong> Cổng khóa nghĩa sẵn sàng</div>
     </section>
 
     <section class="editor-grid" aria-label="Khu vực biên tập hai cột">
@@ -601,7 +601,7 @@
           <div><span>Số lần sửa</span><strong id="changeTotal">0</strong></div>
         </div>
         <div class="change-list" id="changeList">
-          <div class="empty-state"><strong>Chưa có thay đổi tự động</strong>Chọn mức sửa và nhấn “Biên tập sâu”.</div>
+          <div class="empty-state"><strong>Chưa có thay đổi tự động</strong>Chọn mức sửa và nhấn “Xử lý văn bản”.</div>
         </div>
         <div class="author-prompts" id="authorPrompts" hidden>
           <h3>Phần chỉ người viết mới có thể bổ sung</h3>
@@ -625,7 +625,7 @@
 
   <footer class="app-footer">
     <div class="footer-inner">
-      <span>VietDraft Offline 2.0 · Bộ quy tắc diễn đạt V3 · Xử lý trong trình duyệt</span>
+      <span>VietDraft Offline 2.1 · Khóa nghĩa nghiêm ngặt · Xử lý trong trình duyệt</span>
       <span>Không tải thư viện ngoài · Không gọi API · Không chấm “xác suất AI”</span>
     </div>
   </footer>
@@ -638,7 +638,8 @@
         <h3>Công cụ làm được</h3>
         <ul>
           <li>Chuẩn hóa Unicode, khoảng trắng, dấu câu và một số lỗi đánh máy an toàn.</li>
-          <li>Ba chế độ: chỉnh câu, viết lại sâu có kiểm soát và kiểm toán chưa sửa.</li>
+          <li>Ba chế độ bảo toàn: dọn kỹ thuật, tách câu/đoạn và kiểm toán chưa sửa.</li>
+          <li>Khi khóa nghĩa hoạt động, toàn bộ từ của bản gốc phải còn nguyên và đúng thứ tự; ứng dụng chỉ được đổi dấu câu, chữ hoa đầu câu và ranh giới đoạn.</li>
           <li>Quét 100 cụm văn phong khuôn mẫu và 35 cách chỉ trỏ mơ hồ; điều chỉnh theo người đọc và phạm vi được chọn.</li>
           <li>Khóa số liệu, công thức, trích dẫn, URL, email và nội dung trong dấu nháy trước khi cho xuất.</li>
           <li>Phát hiện câu quá dài/ngắn, nhịp câu đều, lặp từ, sáo ngữ, khẳng định tuyệt đối, đoạn văn mất cân đối và nguồn dẫn cần kiểm tra.</li>
@@ -737,7 +738,7 @@
 
     const state = {
       issues: [], stats: null, activeFilter: "all", undoStack: [], lastGenerated: "", analyzedText: "",
-      changeLog: [], changeLevel: "", authorPrompts: [], lastInvariant: null
+      changeLog: [], changeLevel: "", authorPrompts: [], lastInvariant: null, lastSemantic: null
     };
 
     function words(text) { return text.match(WORD_RE) || []; }
@@ -801,7 +802,7 @@
     }
 
     const EDIT_LEVELS = { audit: 0, light: 1, balanced: 2, deep: 3 };
-    const EDIT_LEVEL_LABELS = { audit: "Mức C · Kiểm toán", light: "Mức A · Chỉnh câu", balanced: "Mức A+ · Cân bằng", deep: "Mức B · Viết lại sâu" };
+    const EDIT_LEVEL_LABELS = { audit: "Mức C · Kiểm toán", light: "Mức A · Dọn kỹ thuật", balanced: "Mức A+ · Tách câu bảo toàn", deep: "Mức B · Tái cấu trúc bảo toàn" };
     const PROTECTED_SEGMENTS = /(```[\s\S]*?```|`[^`\n]+`|“[^”]*”|"[^"\n]*"|https?:\/\/\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,})/g;
 
     function addChange(ctx, id, title, description, count = 1) {
@@ -962,19 +963,14 @@
           if (candidates.length) {
             const middle = sentence.length / 2;
             const chosen = candidates.sort((a, b) => Math.abs(a.index - middle) - Math.abs(b.index - middle))[0];
-            const connector = chosen[1].toLocaleLowerCase("vi");
-            const starters = {
-              "nhưng": "Nhưng ", "tuy nhiên": "Nhưng ", "vì vậy": "Bởi vậy, ", "do đó": "Bởi vậy, ",
-              "đồng thời": "", "mặt khác": "Ở chiều ngược lại, ", "ngoài ra": "",
-              "bên cạnh đó": "", "trong khi": "Trong khi "
-            };
             const left = sentence.slice(0, chosen.index).trim().replace(/[,:;]+$/, "");
             const rightStart = chosen.index + chosen[0].length;
             const right = sentence.slice(rightStart).trim();
             if (words(left).length >= 6 && words(right).length >= 5) {
               count += 1;
               blockChanged = true;
-              return `${left}. ${starters[connector] || ""}${right}`;
+              const preservedRight = capitalizeSentenceStarts(`${chosen[1]} ${right}`);
+              return `${left}. ${preservedRight}`;
             }
           }
           const semicolons = [...sentence.matchAll(/;\s+/g)];
@@ -1079,14 +1075,16 @@
       const audience = options.audience || "general";
       if (level === "audit") {
         const metrics = measureEditImpact(source, source, []);
-        return { text: source, logs: [], prompts: buildAuthorPrompts(source), level, audience, metrics, invariants: auditInvariants(source, source, options.lockedTerms || []), substantial: false, auditOnly: true };
+        return { text: source, logs: [], prompts: buildAuthorPrompts(source), level, audience, metrics, invariants: auditInvariants(source, source, options.lockedTerms || []), semantic: auditMeaningPreservation(source, source), substantial: false, auditOnly: true };
       }
+      const strictMeaning = true;
       const ctx = { text: source, level, audience, logs: new Map() };
-      const technical = removeDuplicateWords(safeClean(ctx.text));
+      const technical = strictMeaning ? safeClean(ctx.text) : removeDuplicateWords(safeClean(ctx.text));
       if (technical !== ctx.text) addChange(ctx, "technical", "Dọn lỗi kỹ thuật", "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", 1);
       ctx.text = technical;
 
-      applyPlainLanguageRules(ctx);
+      if (!strictMeaning) {
+        applyPlainLanguageRules(ctx);
 
       applyEditRule(ctx, "opening", "Bỏ mở đầu khuôn mẫu", "Đưa thẳng nội dung chính lên đầu câu.", /(?:trong bối cảnh hiện nay|như chúng ta đã biết),?\s*/giu, "", "light");
       applyEditRule(ctx, "opening", "Bỏ lời dẫn thừa", "Giảm các cụm báo trước nhận định nhưng không thêm thông tin.", /(?:có thể thấy rằng|không thể phủ nhận rằng|điều đáng nói là)\s*/giu, "", "light");
@@ -1121,13 +1119,14 @@
       applyEditRule(ctx, "citation-verbs", "Đa dạng động từ dẫn nguồn", "Giảm lặp động từ dẫn giải nhưng giữ nguyên tác giả, năm và nội dung quy chiếu.", /cũng chú trọng tới/giu, "cũng nhấn mạnh", "deep");
       applyEditRule(ctx, "citation-verbs", "Đa dạng động từ dẫn nguồn", "Giảm lặp động từ dẫn giải nhưng giữ nguyên tác giả, năm và nội dung quy chiếu.", /cho thấy rằng/giu, "cho thấy", "deep");
 
-      if (level === "deep") {
-        const academicStructures = reshapeAcademicStructures(ctx.text);
-        ctx.text = academicStructures.text;
-        addChange(ctx, "academic-structure", "Đổi cấu trúc câu học thuật", "Tách cặp ý “không chỉ… mà còn…” và quan hệ giải thích dài thành các câu có trọng tâm rõ hơn.", academicStructures.count);
-        const references = resolveVagueReferences(ctx.text);
-        ctx.text = references.text;
-        addChange(ctx, "clear-reference", "Làm rõ cách chỉ trỏ", "Gộp câu khi chủ thể đã có ngay trước đó; không tự đặt chủ thể mới.", references.count);
+        if (level === "deep") {
+          const academicStructures = reshapeAcademicStructures(ctx.text);
+          ctx.text = academicStructures.text;
+          addChange(ctx, "academic-structure", "Đổi cấu trúc câu học thuật", "Tách cặp ý “không chỉ… mà còn…” và quan hệ giải thích dài thành các câu có trọng tâm rõ hơn.", academicStructures.count);
+          const references = resolveVagueReferences(ctx.text);
+          ctx.text = references.text;
+          addChange(ctx, "clear-reference", "Làm rõ cách chỉ trỏ", "Gộp câu khi chủ thể đã có ngay trước đó; không tự đặt chủ thể mới.", references.count);
+        }
       }
 
       if (EDIT_LEVELS[level] >= EDIT_LEVELS.balanced) {
@@ -1148,14 +1147,17 @@
       ctx.text = finalized;
       const logs = [...ctx.logs.values()];
       const invariants = auditInvariants(source, ctx.text, options.lockedTerms || []);
-      if (options.integrityLock !== false && !invariants.passed) {
-        const blockedLogs = [{ id: "integrity-block", title: "Cổng bảo toàn đã chặn đầu ra", description: "Ít nhất một số liệu, công thức, trích dẫn hoặc đoạn được bảo vệ không còn nguyên vẹn; ứng dụng trả lại bản gốc.", count: invariants.missing.length }];
+      const semantic = auditMeaningPreservation(source, ctx.text);
+      if (strictMeaning && (!invariants.passed || !semantic.passed)) {
+        const errorCount = invariants.missing.length + (semantic.passed ? 0 : 1);
+        const blockedLogs = [{ id: "integrity-block", title: "Cổng khóa nghĩa đã chặn đầu ra", description: "Ít nhất một từ ngữ, số liệu, công thức, trích dẫn hoặc thuật ngữ của bản gốc không còn nguyên vẹn; ứng dụng trả lại bản gốc.", count: errorCount }];
         const metrics = measureEditImpact(source, source, blockedLogs);
         const missing = invariants.missing.slice(0, 3).map(item => `“${excerpt(item.item, 70)}”`).join(", ");
-        return { text: source, logs: blockedLogs, prompts: [`Cần kiểm tra: nội dung được bảo vệ chưa giữ nguyên (${missing}).`], level, audience, metrics, invariants, substantial: false, blocked: true };
+        const prompt = semantic.passed ? `Cần kiểm tra: nội dung được bảo vệ chưa giữ nguyên (${missing}).` : `Cần kiểm tra: từ thứ ${semantic.firstMismatch + 1} đã bị mất, thêm hoặc thay; đầu ra đã được hoàn nguyên.`;
+        return { text: source, logs: blockedLogs, prompts: [prompt], level, audience, metrics, invariants, semantic, substantial: false, blocked: true };
       }
       const metrics = measureEditImpact(source, ctx.text, logs);
-      return { text: ctx.text, logs, prompts: buildAuthorPrompts(ctx.text), level, audience, metrics, invariants, substantial: metrics.substantial };
+      return { text: ctx.text, logs, prompts: buildAuthorPrompts(ctx.text), level, audience, metrics, invariants, semantic, substantial: metrics.substantial };
     }
 
     function measureEditImpact(source, output, logs = []) {
@@ -1212,6 +1214,30 @@
         if (gap > 0) missing.push({ item, count: gap });
       }
       return { passed: missing.length === 0, checked: [...expected.values()].reduce((sum, count) => sum + count, 0), missing };
+    }
+
+    function semanticTokens(text) {
+      return words(text.normalize("NFC")).map(token => token.toLocaleLowerCase("vi"));
+    }
+
+    function auditMeaningPreservation(source, output) {
+      const expected = semanticTokens(source);
+      const actual = semanticTokens(output);
+      const limit = Math.min(expected.length, actual.length);
+      let firstMismatch = -1;
+      for (let index = 0; index < limit; index++) {
+        if (expected[index] !== actual[index]) { firstMismatch = index; break; }
+      }
+      if (firstMismatch === -1 && expected.length !== actual.length) firstMismatch = limit;
+      return {
+        passed: firstMismatch === -1,
+        checked: expected.length,
+        sourceWords: expected.length,
+        outputWords: actual.length,
+        firstMismatch,
+        expected: firstMismatch >= 0 ? expected[firstMismatch] || "∅" : null,
+        actual: firstMismatch >= 0 ? actual[firstMismatch] || "∅" : null
+      };
     }
 
     function computeStats(text) {
@@ -1524,7 +1550,7 @@
       $("#changeBadge").textContent = total;
       els.changeList.innerHTML = "";
       if (!state.changeLog.length) {
-        els.changeList.innerHTML = '<div class="empty-state"><strong>Chưa có thay đổi tự động</strong>Chọn mức sửa và nhấn “Biên tập sâu”.</div>';
+        els.changeList.innerHTML = '<div class="empty-state"><strong>Chưa có thay đổi tự động</strong>Chọn mức sửa và nhấn “Xử lý văn bản”.</div>';
       } else {
         state.changeLog.forEach((item, index) => {
           const card = document.createElement("article"); card.className = "change-card";
@@ -1617,22 +1643,25 @@
       const source = els.input.value;
       if (!source.trim()) { toast("Chưa có văn bản để dọn định dạng."); return; }
       pushUndo();
-      const proposed = removeDuplicateWords(safeClean(source));
+      const strictMeaning = true;
+      const proposed = strictMeaning ? safeClean(source) : removeDuplicateWords(safeClean(source));
       const lockedTerms = $("#lockedTerms").value.split(/[;\n]+/).map(item => item.trim()).filter(Boolean);
       const invariant = auditInvariants(source, proposed, lockedTerms);
-      const blocked = $("#integrityLock").checked && !invariant.passed;
+      const semantic = auditMeaningPreservation(source, proposed);
+      const blocked = strictMeaning && (!invariant.passed || !semantic.passed);
       const cleaned = blocked ? source : proposed;
       els.output.value = cleaned;
       state.lastGenerated = cleaned;
       state.changeLevel = "";
       state.changeLog = blocked
-        ? [{ id: "integrity-block", title: "Cổng bảo toàn đã chặn đầu ra", description: "Dọn định dạng làm thay đổi một mục bất biến; ứng dụng trả lại bản gốc.", count: invariant.missing.length }]
+        ? [{ id: "integrity-block", title: "Cổng khóa nghĩa đã chặn đầu ra", description: "Dọn định dạng làm thay đổi từ ngữ hoặc một mục bất biến; ứng dụng trả lại bản gốc.", count: invariant.missing.length + (semantic.passed ? 0 : 1) }]
         : source === cleaned ? [] : [{ id: "technical", title: "Dọn lỗi kỹ thuật", description: "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", count: 1 }];
       state.authorPrompts = blocked ? ["Cần kiểm tra: nội dung trong phần được bảo vệ có khoảng trắng hoặc ký tự cần giữ nguyên."] : [];
       state.lastInvariant = invariant;
+      state.lastSemantic = semantic;
       renderChangeLog();
-      renderGuardStatus(state.lastInvariant, $("#integrityLock").checked);
-      $("#outputState").textContent = blocked ? "Đã chặn · dữ kiện chưa toàn vẹn" : source === cleaned ? "Không có lỗi kỹ thuật" : "Đã dọn định dạng";
+      renderGuardStatus(state.lastInvariant, state.lastSemantic, strictMeaning);
+      $("#outputState").textContent = blocked ? "Đã chặn · nghĩa chưa toàn vẹn" : source === cleaned ? "Không có lỗi kỹ thuật" : "Đã dọn định dạng";
       updateCounters();
       renderCompare();
       runAnalysis(false);
@@ -1640,22 +1669,23 @@
       toast(changed);
     }
 
-    function renderGuardStatus(report, enabled = true) {
+    function renderGuardStatus(report, semantic, enabled = true) {
       const guard = $("#guardStatus");
       guard.classList.remove("guard-ok", "guard-error");
       if (!enabled) {
         guard.innerHTML = "<strong>5</strong> Khóa bảo toàn đang tắt";
         return;
       }
-      if (report?.passed) {
+      if (report?.passed && semantic?.passed) {
         guard.classList.add("guard-ok");
-        guard.innerHTML = `<strong>5</strong> Đã giữ ${report.checked} mục bất biến`;
-      } else if (report) {
+        guard.innerHTML = `<strong>5</strong> Đã giữ nguyên ${semantic.checked} từ + ${report.checked} mục khóa`;
+      } else if (report || semantic) {
         guard.classList.add("guard-error");
-        guard.innerHTML = `<strong>5</strong> Đã chặn ${report.missing.length} sai lệch`;
+        const count = (report?.missing?.length || 0) + (semantic?.passed === false ? 1 : 0);
+        guard.innerHTML = `<strong>5</strong> Đã chặn ${count} sai lệch nghĩa/dữ kiện`;
       } else {
         guard.classList.add("guard-ok");
-        guard.innerHTML = "<strong>5</strong> Cổng bảo toàn sẵn sàng";
+        guard.innerHTML = "<strong>5</strong> Cổng khóa nghĩa sẵn sàng";
       }
     }
 
@@ -1678,17 +1708,19 @@
       const result = deepEdit(target, level, { audience, integrityLock, lockedTerms });
       const finalText = source.slice(0, start) + result.text + source.slice(end);
       const wholeInvariant = auditInvariants(source, finalText, lockedTerms);
+      const wholeSemantic = auditMeaningPreservation(source, finalText);
       els.output.value = finalText;
       state.lastGenerated = finalText;
       state.changeLog = result.logs;
       state.changeLevel = result.level;
       state.authorPrompts = result.prompts;
       state.lastInvariant = wholeInvariant;
+      state.lastSemantic = wholeSemantic;
       renderChangeLog();
       updateCounters();
       renderCompare();
       runAnalysis(false);
-      renderGuardStatus(wholeInvariant, integrityLock);
+      renderGuardStatus(wholeInvariant, wholeSemantic, integrityLock);
       if (result.auditOnly) {
         $("#outputState").textContent = `Đã kiểm toán · ${state.issues.length} nhóm cần xem`;
         switchTab("suggestions");
@@ -1697,12 +1729,12 @@
       }
       switchTab("changes");
       const total = result.logs.reduce((sum, item) => sum + item.count, 0);
-      if (result.blocked || (integrityLock && !wholeInvariant.passed)) {
-        $("#outputState").textContent = "Đã chặn · dữ kiện chưa toàn vẹn";
-        toast("Cổng bảo toàn phát hiện sai lệch và đã trả lại phần gốc.");
+      if (result.blocked || (integrityLock && (!wholeInvariant.passed || !wholeSemantic.passed))) {
+        $("#outputState").textContent = "Đã chặn · nghĩa chưa toàn vẹn";
+        toast("Cổng khóa nghĩa phát hiện từ bị mất, thêm hoặc thay và đã trả lại phần gốc.");
       } else if (result.substantial) {
         $("#outputState").textContent = `${EDIT_LEVEL_LABELS[level]} · ${AUDIENCE_LABELS[audience]} · ${paragraphs(finalText).length} đoạn`;
-        toast(`Đã xử lý ${total} vị trí thuộc ${result.logs.length} nhóm; cổng bảo toàn đã kiểm tra đầu ra.`);
+        toast(`Đã xử lý ${total} vị trí thuộc ${result.logs.length} nhóm; ${wholeSemantic.checked} từ được giữ nguyên đúng thứ tự.`);
       } else {
         $("#outputState").textContent = total ? "Thay đổi rất ít · cần tự rà soát" : "Chưa có cấu trúc phù hợp để sửa";
         toast(total ? "Mức thay đổi thực tế còn thấp; hãy xem nhật ký và tự rà soát." : "Không có mẫu phù hợp để tự sửa; hãy xem phần gợi ý.");
@@ -1743,10 +1775,11 @@
       if (!state.stats) { toast("Hãy phân tích văn bản trước khi xuất báo cáo."); return; }
       const score = qualityScore(state.issues, state.stats);
       const report = {
-        app: "VietDraft Offline", version: "2.0.0", exportedAt: new Date().toISOString(),
+        app: "VietDraft Offline", version: "2.1.0", exportedAt: new Date().toISOString(),
         note: "Điểm rõ ràng theo quy tắc; không phải xác suất AI và không xác định tác giả.",
         statistics: { words: state.stats.words, sentences: state.stats.sentences, paragraphs: state.stats.paragraphs, averageWordsPerSentence: Number(state.stats.average.toFixed(2)), lexicalDiversity: Number(state.stats.diversity.toFixed(4)), v3FormulaCount: state.stats.forbiddenCount || 0, vagueReferenceCount: state.stats.vagueCount || 0, clarityScore: score },
         invariantGate: state.lastInvariant,
+        meaningGate: state.lastSemantic,
         issues: state.issues
       };
       downloadBlob(JSON.stringify(report, null, 2), "vietdraft-bao-cao.json", "application/json;charset=utf-8");
@@ -1771,7 +1804,7 @@
           if (EDIT_LEVEL_LABELS[saved.level]) $("#editDepth").value = saved.level;
           if (AUDIENCE_LABELS[saved.audience]) $("#audienceMode").value = saved.audience;
           if (["all", "selection"].includes(saved.scope)) $("#scopeMode").value = saved.scope;
-          if (typeof saved.integrityLock === "boolean") $("#integrityLock").checked = saved.integrityLock;
+          $("#integrityLock").checked = true;
           if (typeof saved.lockedTerms === "string") $("#lockedTerms").value = saved.lockedTerms;
         }
       } catch { /* Bỏ qua dữ liệu cục bộ lỗi. */ }
@@ -1802,7 +1835,7 @@
       if (els.input.value.trim() && !confirm("Thay nội dung hiện tại bằng văn bản mẫu?")) return;
       els.input.value = sample;
       els.output.value = "";
-      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; renderChangeLog(); renderGuardStatus();
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; state.lastSemantic = null; renderChangeLog(); renderGuardStatus();
       updateCounters();
       toast("Đã nạp văn bản mẫu. Chọn Kiểm tra toàn diện hoặc Xử lý văn bản.");
     }
@@ -1828,7 +1861,7 @@
         const text = await file.text();
         els.input.value = text;
         els.output.value = "";
-        state.undoStack = []; state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; renderChangeLog(); renderGuardStatus();
+        state.undoStack = []; state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; state.lastSemantic = null; renderChangeLog(); renderGuardStatus();
         updateCounters();
         toast(`Đã nhập ${file.name}.`);
       } catch { toast("Không đọc được tệp này."); }
@@ -1839,7 +1872,7 @@
     $("#clearBtn").addEventListener("click", () => {
       if ((els.input.value || els.output.value) && !confirm("Xóa toàn bộ văn bản gốc, bản làm việc và kết quả phân tích?")) return;
       els.input.value = ""; els.output.value = ""; state.issues = []; state.stats = null; state.undoStack = [];
-      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null;
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; state.lastSemantic = null;
       clearLocal(); updateCounters(); updateSummary(); renderIssues(); renderStats(computeStats(""), null); renderCompare(); renderChangeLog(); renderGuardStatus();
       $("#undoBtn").disabled = true; toast("Đã xóa nội dung trên thiết bị.");
     });
@@ -1856,7 +1889,7 @@
     $("#undoBtn").addEventListener("click", () => {
       if (!state.undoStack.length) return;
       els.output.value = state.undoStack.pop(); state.lastGenerated = els.output.value;
-      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; renderChangeLog(); renderGuardStatus();
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; state.lastSemantic = null; renderChangeLog(); renderGuardStatus();
       $("#outputState").textContent = "Đã hoàn tác";
       $("#undoBtn").disabled = state.undoStack.length === 0; updateCounters(); renderCompare(); toast("Đã hoàn tác bản làm việc.");
     });
@@ -1873,7 +1906,7 @@
     ["#editDepth", "#audienceMode", "#scopeMode"].forEach(selector => $(selector).addEventListener("change", () => { if (els.remember.checked) saveLocal(); }));
     $("#lockedTerms").addEventListener("input", () => { if (els.remember.checked) saveLocal(); });
     $("#integrityLock").addEventListener("change", () => {
-      renderGuardStatus(state.lastInvariant, $("#integrityLock").checked);
+      renderGuardStatus(state.lastInvariant, state.lastSemantic, $("#integrityLock").checked);
       if (els.remember.checked) saveLocal();
     });
 
