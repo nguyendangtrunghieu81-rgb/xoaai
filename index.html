@@ -180,6 +180,36 @@
       background: var(--surface-2);
       font-weight: 700;
     }
+    .term-input {
+      min-height: 40px;
+      width: min(260px, 100%);
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--text);
+      background: var(--surface-2);
+    }
+    .workflow-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin: -2px 0 14px;
+    }
+    .workflow-step {
+      min-width: 0;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      background: var(--surface-2);
+      font-size: .76rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .workflow-step strong { color: var(--primary-2); }
+    .workflow-step.guard-ok { border-color: color-mix(in srgb, var(--primary) 42%, var(--line)); }
+    .workflow-step.guard-error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); }
 
     .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .editor-card {
@@ -235,7 +265,7 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(8, minmax(0, 1fr));
       gap: 10px;
       margin-top: 14px;
     }
@@ -353,7 +383,8 @@
 
     @media (max-width: 980px) {
       .editor-grid, .overview-grid { grid-template-columns: 1fr; }
-      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+      .workflow-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .method-grid { grid-template-columns: repeat(2, 1fr); }
       textarea { min-height: 330px; }
     }
@@ -369,9 +400,11 @@
       .toolbar > .tool-group { width: 100%; }
       .tool-group .btn { flex: 1 1 auto; }
       .mode-select { flex: 1 1 150px; }
+      .term-input { flex: 1 1 100%; width: 100%; }
       .editor-grid { gap: 10px; }
       textarea { min-height: 300px; padding: 14px; font-size: .95rem; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .workflow-strip { grid-template-columns: 1fr 1fr; }
       .tab-panel { padding: 13px; }
       .summary-list { grid-template-columns: 1fr 1fr 1fr; }
       .compare-grid, .method-grid { grid-template-columns: 1fr; }
@@ -431,15 +464,45 @@
           <input id="rememberToggle" type="checkbox"> Lưu cục bộ
         </label>
         <button class="btn ghost" id="cleanBtn" type="button">Dọn định dạng an toàn</button>
+        <label class="remember-label" title="Chặn đầu ra nếu số liệu, công thức, trích dẫn hoặc nội dung được bảo vệ bị thay đổi">
+          <input id="integrityLock" type="checkbox" checked> Khóa dữ kiện
+        </label>
         <label class="sr-only" for="editDepth">Mức biên tập</label>
-        <select class="mode-select" id="editDepth" title="Chọn mức thay đổi văn bản">
-          <option value="light">Sửa nhẹ</option>
-          <option value="balanced">Sửa cân bằng</option>
-          <option value="deep" selected>Sửa sâu</option>
+        <select class="mode-select" id="editDepth" title="Chọn chế độ xử lý">
+          <option value="light">Mức A · Chỉnh câu</option>
+          <option value="balanced">Mức A+ · Cân bằng</option>
+          <option value="deep" selected>Mức B · Viết lại sâu</option>
+          <option value="audit">Mức C · Chỉ kiểm toán</option>
         </select>
-        <button class="btn accent" id="rewriteBtn" type="button">✦ Biên tập sâu</button>
-        <button class="btn primary" id="analyzeBtn" type="button">Phân tích 30 tiêu chí</button>
+        <label class="sr-only" for="audienceMode">Người đọc mục tiêu</label>
+        <select class="mode-select" id="audienceMode" title="Chọn người đọc mục tiêu">
+          <option value="general" selected>Người đọc · Chung</option>
+          <option value="student">Người đọc · Học sinh</option>
+          <option value="parent">Người đọc · Phụ huynh</option>
+          <option value="teacher">Người đọc · Giáo viên</option>
+          <option value="manager">Người đọc · Quản lý</option>
+          <option value="academic">Người đọc · Học thuật</option>
+          <option value="administrative">Giọng · Hành chính</option>
+          <option value="communication">Giọng · Truyền thông</option>
+        </select>
+        <label class="sr-only" for="scopeMode">Phạm vi xử lý</label>
+        <select class="mode-select" id="scopeMode" title="Xử lý toàn văn hoặc chỉ vùng đang bôi chọn">
+          <option value="all" selected>Phạm vi · Toàn văn</option>
+          <option value="selection">Phạm vi · Vùng bôi chọn</option>
+        </select>
+        <label class="sr-only" for="lockedTerms">Thuật ngữ phải giữ nguyên</label>
+        <input class="term-input" id="lockedTerms" type="text" placeholder="Thuật ngữ phải giữ; cách nhau bằng ;" title="Nhập tên mô hình, thang đo hoặc thuật ngữ phải giữ nguyên; cách nhau bằng dấu chấm phẩy">
+        <button class="btn accent" id="rewriteBtn" type="button">✦ Xử lý văn bản</button>
+        <button class="btn primary" id="analyzeBtn" type="button">Kiểm tra toàn diện</button>
       </div>
+    </section>
+
+    <section class="workflow-strip" aria-label="Quy trình xử lý V3">
+      <div class="workflow-step"><strong>1</strong> Khóa dữ kiện</div>
+      <div class="workflow-step"><strong>2</strong> Sửa từ nghĩa</div>
+      <div class="workflow-step"><strong>3</strong> Đổi cấu trúc</div>
+      <div class="workflow-step"><strong>4</strong> Quét 100 + 35</div>
+      <div class="workflow-step guard-ok" id="guardStatus"><strong>5</strong> Cổng bảo toàn sẵn sàng</div>
     </section>
 
     <section class="editor-grid" aria-label="Khu vực biên tập hai cột">
@@ -482,6 +545,8 @@
       <div class="stat-card"><span>Số đoạn</span><strong id="statParagraphs">0</strong></div>
       <div class="stat-card"><span>Từ/câu trung bình</span><strong id="statAverage">0</strong></div>
       <div class="stat-card"><span>Đa dạng từ vựng</span><strong id="statDiversity">0%</strong></div>
+      <div class="stat-card"><span>Cụm khuôn V3</span><strong id="statForbidden">0</strong></div>
+      <div class="stat-card"><span>Chỉ trỏ mơ hồ</span><strong id="statVague">0</strong></div>
       <div class="stat-card"><span>Điểm rõ ràng</span><strong class="score-ring" id="statQuality">—</strong></div>
     </section>
 
@@ -491,7 +556,7 @@
         <button class="tab-btn" type="button" data-tab="suggestions">Gợi ý <span id="issueBadge">0</span></button>
         <button class="tab-btn" type="button" data-tab="changes">Nhật ký sửa <span id="changeBadge">0</span></button>
         <button class="tab-btn" type="button" data-tab="compare">So sánh</button>
-        <button class="tab-btn" type="button" data-tab="methods">30 phương pháp</button>
+        <button class="tab-btn" type="button" data-tab="methods">30 tiêu chí + V3</button>
       </nav>
 
       <div class="tab-panel active" id="panel-overview">
@@ -499,7 +564,7 @@
           <div class="quality-card">
             <div class="quality-value"><span id="qualityValue">—</span><small>/100</small></div>
             <h3 id="qualityLabel">Chưa phân tích</h3>
-            <p id="qualityHelp">Dán văn bản rồi chọn “Phân tích 30 tiêu chí”. Điểm này phản ánh độ rõ ràng theo quy tắc, không phải xác suất AI.</p>
+            <p id="qualityHelp">Dán văn bản rồi chọn “Kiểm tra toàn diện”. Điểm này phản ánh độ rõ ràng theo quy tắc, không phải xác suất AI.</p>
             <div class="quality-bar" aria-hidden="true"><i id="qualityBar"></i></div>
           </div>
           <div class="summary-box">
@@ -552,6 +617,7 @@
       </div>
 
       <div class="tab-panel" id="panel-methods">
+        <div class="integrity-note"><strong>Bộ V3 tích hợp:</strong> ngoài 30 tiêu chí bên dưới, ứng dụng còn quét độc lập đúng 100 cụm diễn đạt theo khuôn và 35 cách chỉ trỏ mơ hồ. Phần trích dẫn nguyên văn, URL, email và mã được loại khỏi phép quét này.</div>
         <div class="method-grid" id="methodGrid"></div>
       </div>
     </section>
@@ -559,7 +625,7 @@
 
   <footer class="app-footer">
     <div class="footer-inner">
-      <span>VietDraft Offline 1.2 · Toàn bộ xử lý diễn ra trong trình duyệt</span>
+      <span>VietDraft Offline 2.0 · Bộ quy tắc diễn đạt V3 · Xử lý trong trình duyệt</span>
       <span>Không tải thư viện ngoài · Không gọi API · Không chấm “xác suất AI”</span>
     </div>
   </footer>
@@ -572,7 +638,9 @@
         <h3>Công cụ làm được</h3>
         <ul>
           <li>Chuẩn hóa Unicode, khoảng trắng, dấu câu và một số lỗi đánh máy an toàn.</li>
-          <li>Biên tập sâu theo quy tắc: giảm câu khuôn mẫu, liên từ lặp, động từ vòng, khẳng định quá mức; tách câu và đoạn quá dài.</li>
+          <li>Ba chế độ: chỉnh câu, viết lại sâu có kiểm soát và kiểm toán chưa sửa.</li>
+          <li>Quét 100 cụm văn phong khuôn mẫu và 35 cách chỉ trỏ mơ hồ; điều chỉnh theo người đọc và phạm vi được chọn.</li>
+          <li>Khóa số liệu, công thức, trích dẫn, URL, email và nội dung trong dấu nháy trước khi cho xuất.</li>
           <li>Phát hiện câu quá dài/ngắn, nhịp câu đều, lặp từ, sáo ngữ, khẳng định tuyệt đối, đoạn văn mất cân đối và nguồn dẫn cần kiểm tra.</li>
           <li>Ghi nhật ký từng nhóm thay đổi để người dùng kiểm tra, hoàn tác, so sánh và xuất TXT/JSON.</li>
         </ul>
@@ -611,7 +679,28 @@
     const ABSOLUTES = ["chắc chắn", "hoàn toàn", "tuyệt đối", "không bao giờ", "luôn luôn", "duy nhất", "100%", "không thể sai", "mọi trường hợp"];
     const SUPERLATIVES = ["tốt nhất", "lớn nhất", "quan trọng nhất", "vượt trội", "tối ưu nhất", "hoàn hảo", "vô cùng quan trọng"];
     const WEAK_PHRASES = ["thực hiện việc", "tiến hành việc", "có sự", "đưa ra sự", "tạo ra sự", "trong việc", "nhằm mục đích để"];
-    const VAGUE_REFERENCES = ["điều này", "vấn đề này", "khía cạnh này", "hiện tượng này", "những điều trên", "nội dung trên"];
+    const FORBIDDEN_PHRASES = [
+      "thứ nhất", "một là", "trước hết", "tiếp theo", "sau cùng", "bên cạnh đó", "song song với đó", "mặt khác", "ngược lại", "không chỉ… mà còn…",
+      "trên bình diện", "trong phạm vi", "xét trên góc độ", "dưới lăng kính", "trong bối cảnh", "trên phương diện", "xét về mặt", "trong khuôn khổ", "ở khía cạnh", "trên thực tế",
+      "quan điểm này phù hợp với", "kết quả này tương đồng với nghiên cứu của", "nhận định này có sự thống nhất với", "dựa trên cơ sở lý luận của", "kế thừa quan điểm của", "chiếu theo", "có sự liên hệ chặt chẽ với", "trùng khớp với dự đoán của", "minh chứng cho luận điểm", "làm rõ thêm giả thuyết",
+      "khái quát hóa", "hệ thống hóa", "cụ thể hóa", "lý thuyết hóa", "tối ưu hóa", "trực quan hóa", "định lượng hóa", "định tính hóa", "mô hình hóa", "tiêu chuẩn hóa",
+      "có thể khẳng định rằng", "điều này chứng tỏ rằng", "số liệu trên cho thấy", "từ đó có thể suy ra", "là minh chứng rõ nét cho", "đóng vai trò nền tảng", "tạo tiền đề cho", "là nhân tố quyết định", "hệ quả tất yếu là", "đáng chú ý là",
+      "tính cấp thiết", "tính khách quan", "tính nhất quán", "tính toàn diện", "tính bền vững", "tính logic", "tính khoa học", "tính thực tiễn", "tính khả thi", "tính vượt trội",
+      "đóng vai trò then chốt", "góp phần làm phong phú thêm", "mang lại giá trị lý luận cao", "giải quyết triệt để vấn đề", "mở ra hướng nghiên cứu mới", "đặt nền móng cho", "nâng cao hiệu quả rõ rệt", "có ý nghĩa thực tiễn sâu sắc", "tạo ra bước đột phá", "là kim chỉ nam cho",
+      "tuy nhiên", "hơn nữa", "ngoài ra", "do đó", "vì vậy", "đồng thời", "mặc dù vậy", "nói cách khác", "cụ thể là", "về cốt lõi",
+      "sâu sắc", "toàn diện", "mạnh mẽ", "triệt để", "nền tảng", "cốt lõi", "trọng yếu", "linh hoạt", "sáng tạo", "tiên tiến",
+      "tóm lại", "nhìn một cách tổng thể", "dựa trên kết quả nghiên cứu", "xuất phát từ thực trạng trên", "đề xuất một số giải pháp nhằm", "hướng tới mục tiêu nâng cao", "để tối ưu hóa quá trình", "khuyến nghị được đưa ra là", "cuối cùng, cần nhấn mạnh rằng", "kết luận lại"
+    ];
+    const VAGUE_REFERENCES = [
+      "nghiên cứu này", "nghiên cứu đó", "các nghiên cứu này", "công trình này", "bài viết này", "đề tài này", "quan điểm này", "nhận định này", "lập luận này", "kết quả này",
+      "số liệu này", "dữ liệu này", "nội dung này", "vấn đề này", "hiện tượng này", "cách tiếp cận này", "phương pháp này", "mô hình này", "giải pháp này", "biện pháp này",
+      "đề xuất này", "tác giả này", "nhóm tác giả này", "trường hợp này", "tình huống này", "ý kiến trên", "nội dung trên", "kết quả trên", "điều này", "việc này",
+      "qua đó", "từ đây", "như đã nêu", "như đã trình bày", "như nói trên"
+    ];
+    const AUDIENCE_LABELS = {
+      general: "Chung", student: "Học sinh", parent: "Phụ huynh", teacher: "Giáo viên",
+      manager: "Quản lý", academic: "Học thuật", administrative: "Hành chính", communication: "Truyền thông"
+    };
 
     const METHODS = [
       ["Unicode và ký tự ẩn", "Chuẩn hóa NFC; phát hiện ký tự zero-width, điều khiển hướng chữ và BOM."],
@@ -648,7 +737,7 @@
 
     const state = {
       issues: [], stats: null, activeFilter: "all", undoStack: [], lastGenerated: "", analyzedText: "",
-      changeLog: [], changeLevel: "", authorPrompts: []
+      changeLog: [], changeLevel: "", authorPrompts: [], lastInvariant: null
     };
 
     function words(text) { return text.match(WORD_RE) || []; }
@@ -711,8 +800,8 @@
         .replace(/(^|[^\p{L}\p{N}])([\p{L}\p{N}]+)\s+([\p{L}\p{N}]+)\s+\2\s+\3(?=$|[^\p{L}\p{N}])/giu, "$1$2 $3");
     }
 
-    const EDIT_LEVELS = { light: 1, balanced: 2, deep: 3 };
-    const EDIT_LEVEL_LABELS = { light: "Sửa nhẹ", balanced: "Sửa cân bằng", deep: "Sửa sâu" };
+    const EDIT_LEVELS = { audit: 0, light: 1, balanced: 2, deep: 3 };
+    const EDIT_LEVEL_LABELS = { audit: "Mức C · Kiểm toán", light: "Mức A · Chỉnh câu", balanced: "Mức A+ · Cân bằng", deep: "Mức B · Viết lại sâu" };
     const PROTECTED_SEGMENTS = /(```[\s\S]*?```|`[^`\n]+`|“[^”]*”|"[^"\n]*"|https?:\/\/\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,})/g;
 
     function addChange(ctx, id, title, description, count = 1) {
@@ -749,6 +838,61 @@
 
     function containsProtectedMeaning(sentence) {
       return /```|`[^`\n]+`|“[^”]*”|"[^"\n]*"|https?:\/\/|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/u.test(sentence);
+    }
+
+    function lowerFirst(value) {
+      return value ? value.charAt(0).toLocaleLowerCase("vi") + value.slice(1) : value;
+    }
+
+    function applyPlainLanguageRules(ctx) {
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /tiến hành kiểm tra/giu, "kiểm tra", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /thực hiện việc điều chỉnh/giu, "điều chỉnh", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /có khả năng xảy ra/giu, "có thể xảy ra", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /trong trường hợp\s+/giu, "khi ", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /đưa ra sự hỗ trợ/giu, "hỗ trợ", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /có sự thay đổi/giu, "thay đổi", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /nhằm mục đích giúp/giu, "để giúp", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /tại thời điểm hiện tại/giu, "hiện nay", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /một số lượng lớn\s+/giu, "nhiều ", "light");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /đáng chú ý là\s*/giu, "", "balanced");
+      applyEditRule(ctx, "plain-language", "Dùng lời trực tiếp, dễ hiểu", "Giảm danh từ hóa và cách nói vòng nhưng giữ nguyên nội dung.", /(?:nói cách khác|cụ thể là),?\s*/giu, "", "deep");
+    }
+
+    function resolveVagueReferences(text) {
+      let count = 0;
+      const blocks = text.split(/(\n\s*\n)/);
+      const output = blocks.map((block, blockIndex) => {
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block)) return block;
+        const sentences = splitSentences(block);
+        if (sentences.length < 2) return block;
+        const edited = [];
+        for (const sentence of sentences) {
+          if (!edited.length || containsProtectedMeaning(sentence)) { edited.push(sentence); continue; }
+          const previous = edited.at(-1);
+          if (containsProtectedMeaning(previous)) { edited.push(sentence); continue; }
+          let match = sentence.match(/^Nghiên cứu này\s+(cho thấy|ghi nhận|gợi ý rằng)\s+(.+)$/iu);
+          if (match && /^(Khảo sát|Phân tích|Thực nghiệm|Nghiên cứu)\b/iu.test(previous)) {
+            edited[edited.length - 1] = `${previous.replace(/[.!?…]+$/, "")} và ${match[1].toLocaleLowerCase("vi")} ${match[2]}`;
+            count += 1;
+            continue;
+          }
+          match = sentence.match(/^(?:Quan điểm này|Nhận định này)\s+(nhấn mạnh|cho thấy|gợi ý)\s+(.+)$/iu);
+          if (match && /^.+?\(\d{4}[a-z]?\)\s+(?:cho rằng|nhận định|gợi ý|nêu)/iu.test(previous)) {
+            edited[edited.length - 1] = `${previous.replace(/[.!?…]+$/, "")} và ${match[1].toLocaleLowerCase("vi")} ${match[2]}`;
+            count += 1;
+            continue;
+          }
+          match = sentence.match(/^(?:Điều này|Việc này)\s+giúp\s+(.+)$/iu);
+          if (match && words(previous).length >= 5) {
+            edited[edited.length - 1] = `Việc ${lowerFirst(previous.replace(/[.!?…]+$/, ""))} giúp ${match[1]}`;
+            count += 1;
+            continue;
+          }
+          edited.push(sentence);
+        }
+        return edited.join(" ");
+      }).join("");
+      return { text: output, count };
     }
 
     function reduceRepeatedConnectors(text) {
@@ -814,16 +958,15 @@
         const edited = sentences.map(sentence => {
           if (containsProtectedMeaning(sentence)) return sentence;
           if (words(sentence).length <= threshold) return sentence;
-          const candidates = [...sentence.matchAll(/(?:,\s+|\s+)(nhưng|tuy nhiên|vì vậy|do đó|đồng thời|mặt khác|ngoài ra|bên cạnh đó|trong khi|qua đó|cho phép)\s+/giu)];
+          const candidates = [...sentence.matchAll(/(?:,\s+|\s+)(nhưng|tuy nhiên|vì vậy|do đó|đồng thời|mặt khác|ngoài ra|bên cạnh đó|trong khi)\s+/giu)];
           if (candidates.length) {
             const middle = sentence.length / 2;
             const chosen = candidates.sort((a, b) => Math.abs(a.index - middle) - Math.abs(b.index - middle))[0];
             const connector = chosen[1].toLocaleLowerCase("vi");
             const starters = {
-              "nhưng": "Tuy nhiên, ", "tuy nhiên": "Tuy nhiên, ", "vì vậy": "Vì vậy, ", "do đó": "Vì vậy, ",
-              "đồng thời": "Đồng thời, ", "mặt khác": "Mặt khác, ", "ngoài ra": "Ngoài ra, ",
-              "bên cạnh đó": "Ngoài ra, ", "trong khi": "Trong khi ", "qua đó": "Qua đó, ",
-              "cho phép": "Điều này cho phép "
+              "nhưng": "Nhưng ", "tuy nhiên": "Nhưng ", "vì vậy": "Bởi vậy, ", "do đó": "Bởi vậy, ",
+              "đồng thời": "", "mặt khác": "Ở chiều ngược lại, ", "ngoài ra": "",
+              "bên cạnh đó": "", "trong khi": "Trong khi "
             };
             const left = sentence.slice(0, chosen.index).trim().replace(/[,:;]+$/, "");
             const rightStart = chosen.index + chosen[0].length;
@@ -864,9 +1007,9 @@
           if (containsProtectedMeaning(sentence)) return sentence;
           let next = sentence;
           next = next.replace(/^(.*?,\s*)([\p{L}][^,.!?]{1,70})\s+không chỉ là\s+(.+?)\s+mà còn là\s+(.+?)([.!?…])$/iu,
-            (match, lead, subject, firstRole, secondRole, punctuation) => `${lead}${subject} là ${firstRole}. Đồng thời, ${subject.toLocaleLowerCase("vi")} là ${secondRole}${punctuation}`);
+            (match, lead, subject, firstRole, secondRole, punctuation) => `${lead}${subject} là ${firstRole}. ${subject} còn là ${secondRole}${punctuation}`);
           next = next.replace(/^Năng lực\s+chính vì vậy mà\s+không thể hiện đơn thuần ở\s+(.+?)\s+mà ở\s+(.+?)([.!?…])$/iu,
-            (match, recalled, applied, punctuation) => `Vì vậy, năng lực không chỉ thể hiện qua ${recalled}. Điểm cốt lõi còn nằm ở ${applied}${punctuation}`);
+            (match, recalled, applied, punctuation) => `Lượng kiến thức ${recalled} chưa phản ánh đầy đủ năng lực. Năng lực còn thể hiện ở ${applied}${punctuation}`);
           next = next.replace(/^Hoạt động vận dụng khác với việc\s+(.+?)\s+vì học sinh phải\s+(.+?)([.!?…])$/iu,
             (match, repetition, action, punctuation) => `Hoạt động vận dụng không dừng ở việc ${repetition}. Học sinh còn phải ${action}${punctuation}`);
           if (next !== sentence) { count += 1; blockChanged = true; }
@@ -927,14 +1070,23 @@
       if (phraseHits(text.toLocaleLowerCase("vi"), ABSOLUTES).length) prompts.push("Đọc lại các khẳng định mạnh: bằng chứng thực tế có hỗ trợ đúng phạm vi đã nêu không?");
       if (phraseHits(text.toLocaleLowerCase("vi"), CLICHES).length) prompts.push("Nếu cần minh họa, chỉ dùng ví dụ thật từ công việc, lớp học hoặc dữ liệu mà người viết trực tiếp biết.");
       if (/(tôi|chúng tôi|nhóm nghiên cứu)\s+đã\s+(khảo sát|phỏng vấn|quan sát|thực nghiệm|điều tra)/i.test(text)) prompts.push("Xác minh tuyên bố khảo sát/phỏng vấn/quan sát bằng hồ sơ thật; nếu không có, phải bỏ tuyên bố đó.");
-      return prompts.slice(0, 4);
+      const vague = catalogHits(text, VAGUE_REFERENCES);
+      if (vague.length) prompts.push(`Cần làm rõ chủ thể: ${vague.slice(0, 3).map(item => `“${item.phrase}”`).join(", ")} đang thay cho nội dung nào?`);
+      return prompts.slice(0, 5);
     }
 
-    function deepEdit(source, level = "deep") {
-      const ctx = { text: source, level, logs: new Map() };
+    function deepEdit(source, level = "deep", options = {}) {
+      const audience = options.audience || "general";
+      if (level === "audit") {
+        const metrics = measureEditImpact(source, source, []);
+        return { text: source, logs: [], prompts: buildAuthorPrompts(source), level, audience, metrics, invariants: auditInvariants(source, source, options.lockedTerms || []), substantial: false, auditOnly: true };
+      }
+      const ctx = { text: source, level, audience, logs: new Map() };
       const technical = removeDuplicateWords(safeClean(ctx.text));
       if (technical !== ctx.text) addChange(ctx, "technical", "Dọn lỗi kỹ thuật", "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", 1);
       ctx.text = technical;
+
+      applyPlainLanguageRules(ctx);
 
       applyEditRule(ctx, "opening", "Bỏ mở đầu khuôn mẫu", "Đưa thẳng nội dung chính lên đầu câu.", /(?:trong bối cảnh hiện nay|như chúng ta đã biết),?\s*/giu, "", "light");
       applyEditRule(ctx, "opening", "Bỏ lời dẫn thừa", "Giảm các cụm báo trước nhận định nhưng không thêm thông tin.", /(?:có thể thấy rằng|không thể phủ nhận rằng|điều đáng nói là)\s*/giu, "", "light");
@@ -962,12 +1114,6 @@
         addChange(ctx, "sentence-starts", "Đổi nhịp mở câu", "Chuyển câu lặp cùng chủ thể sang cấu trúc nguyên nhân khi quan hệ “giúp” đã có sẵn.", variedStarts.count);
       }
 
-      applyEditRule(ctx, "certainty", "Giảm khẳng định tuyệt đối", "Chuyển một số nhận định sang mức phù hợp hơn khi chưa có đủ bằng chứng.", /hoàn toàn\s+(?=cải thiện|giúp|đáp ứng|thay đổi|loại bỏ|giải quyết|đảm bảo)/giu, "có thể ", "deep");
-      applyEditRule(ctx, "certainty", "Giảm khẳng định tuyệt đối", "Chuyển một số nhận định sang mức phù hợp hơn khi chưa có đủ bằng chứng.", /chắc chắn là/giu, "có thể là", "deep");
-      applyEditRule(ctx, "certainty", "Giảm khẳng định tuyệt đối", "Chuyển một số nhận định sang mức phù hợp hơn khi chưa có đủ bằng chứng.", /không thể thiếu/giu, "có vai trò đáng kể", "deep");
-      applyEditRule(ctx, "scope", "Thu hẹp phạm vi khái quát", "Tránh mở rộng kết luận tới toàn bộ đối tượng khi văn bản chưa có bằng chứng tương ứng.", /mọi học sinh/giu, "nhiều học sinh", "deep");
-      applyEditRule(ctx, "scope", "Thu hẹp phạm vi khái quát", "Tránh mở rộng kết luận tới toàn bộ đối tượng khi văn bản chưa có bằng chứng tương ứng.", /mọi trường hợp/giu, "nhiều trường hợp", "deep");
-      applyEditRule(ctx, "comparison", "Giảm so sánh thiếu tiêu chí", "Thay so sánh nhất bằng nhận định không vượt quá bằng chứng hiện có.", /(?:tốt nhất|tối ưu nhất|hoàn hảo)/giu, "phù hợp", "deep");
       applyEditRule(ctx, "academic-specificity", "Cụ thể hóa điều kiện", "Thay cách gọi trừu tượng bằng phạm vi điều kiện cụ thể hơn mà không thêm dữ kiện.", /trong những điều kiện xác định/giu, "trong từng điều kiện cụ thể", "deep");
       applyEditRule(ctx, "academic-specificity", "Cụ thể hóa điều kiện", "Thay cách gọi trừu tượng bằng phạm vi điều kiện cụ thể hơn mà không thêm dữ kiện.", /trong một hoàn cảnh xác định/giu, "trong từng hoàn cảnh cụ thể", "deep");
       applyEditRule(ctx, "academic-verbs", "Làm rõ động từ học thuật", "Chuyển cụm danh hóa hoặc bị động quen thuộc sang động từ trực tiếp hơn.", /thực hiện thành công một loại hoạt động/giu, "hoàn thành một hoạt động", "deep");
@@ -979,15 +1125,20 @@
         const academicStructures = reshapeAcademicStructures(ctx.text);
         ctx.text = academicStructures.text;
         addChange(ctx, "academic-structure", "Đổi cấu trúc câu học thuật", "Tách cặp ý “không chỉ… mà còn…” và quan hệ giải thích dài thành các câu có trọng tâm rõ hơn.", academicStructures.count);
+        const references = resolveVagueReferences(ctx.text);
+        ctx.text = references.text;
+        addChange(ctx, "clear-reference", "Làm rõ cách chỉ trỏ", "Gộp câu khi chủ thể đã có ngay trước đó; không tự đặt chủ thể mới.", references.count);
       }
 
       if (EDIT_LEVELS[level] >= EDIT_LEVELS.balanced) {
-        const sentenceResult = splitLongSentences(ctx.text, level === "deep" ? 22 : 34);
+        const deepThresholds = { student: 19, parent: 21, teacher: 23, manager: 21, academic: 27, administrative: 24, communication: 20, general: 23 };
+        const sentenceResult = splitLongSentences(ctx.text, level === "deep" ? deepThresholds[audience] || 23 : 34);
         ctx.text = sentenceResult.text;
         addChange(ctx, "sentences", "Tách câu dài theo quan hệ ý", "Tách tại ranh giới đối chiếu, hệ quả hoặc bổ sung khi hai vế đều đủ ý.", sentenceResult.count);
       }
       if (level === "deep") {
-        const paragraphResult = reflowLongParagraphs(ctx.text, 130);
+        const paragraphTargets = { student: 105, parent: 110, teacher: 125, manager: 110, academic: 145, administrative: 120, communication: 105, general: 125 };
+        const paragraphResult = reflowLongParagraphs(ctx.text, paragraphTargets[audience] || 125);
         ctx.text = paragraphResult.text;
         addChange(ctx, "paragraphs", "Tổ chức lại đoạn quá dài", "Chia khối văn bản dài thành nhiều đoạn theo ranh giới câu, đồng thời giữ liền trích dẫn và nội dung được bảo vệ.", paragraphResult.count);
       }
@@ -996,8 +1147,15 @@
       if (finalized !== ctx.text) addChange(ctx, "finish", "Hoàn thiện câu và dấu", "Chuẩn hóa chữ đầu câu và khoảng cách sau khi biên tập.", 1);
       ctx.text = finalized;
       const logs = [...ctx.logs.values()];
+      const invariants = auditInvariants(source, ctx.text, options.lockedTerms || []);
+      if (options.integrityLock !== false && !invariants.passed) {
+        const blockedLogs = [{ id: "integrity-block", title: "Cổng bảo toàn đã chặn đầu ra", description: "Ít nhất một số liệu, công thức, trích dẫn hoặc đoạn được bảo vệ không còn nguyên vẹn; ứng dụng trả lại bản gốc.", count: invariants.missing.length }];
+        const metrics = measureEditImpact(source, source, blockedLogs);
+        const missing = invariants.missing.slice(0, 3).map(item => `“${excerpt(item.item, 70)}”`).join(", ");
+        return { text: source, logs: blockedLogs, prompts: [`Cần kiểm tra: nội dung được bảo vệ chưa giữ nguyên (${missing}).`], level, audience, metrics, invariants, substantial: false, blocked: true };
+      }
       const metrics = measureEditImpact(source, ctx.text, logs);
-      return { text: ctx.text, logs, prompts: buildAuthorPrompts(source), level, metrics, substantial: metrics.substantial };
+      return { text: ctx.text, logs, prompts: buildAuthorPrompts(ctx.text), level, audience, metrics, invariants, substantial: metrics.substantial };
     }
 
     function measureEditImpact(source, output, logs = []) {
@@ -1020,6 +1178,42 @@
       return { sourceParagraphs, outputParagraphs, totalChanges, wordDelta, tokenChangeRatio, substantial };
     }
 
+    function extractLockedSegments(text, customTerms = []) {
+      const normalized = text.normalize("NFC");
+      const found = [];
+      const patterns = [
+        /“[^”]*”|"[^"\n]*"/gu,
+        /https?:\/\/[^\s<>“”"']+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/giu,
+        /\b(?:doi\s*:\s*)?10\.\d{4,9}\/[-._;()/:A-Z0-9]+/giu,
+        /\([^)]*(?:\d{4}[a-z]?|tr\.?\s*\d+|p\.?\s*\d+)[^)]*\)/giu,
+        /\b(?:[\p{Lu}Đ][\p{L}'’.-]+\s+){1,5}\(\d{4}[a-z]?\)/gu,
+        /\b[\p{Lu}Đ][\p{L}'’.-]+(?:\s+(?:(?:và|của|Đại|Học|Trung|Tâm)|[\p{Lu}Đ][\p{L}'’.-]+)){1,7}\b/gu,
+        /\b[\p{L}α-ωΑ-Ωχ²]+\s*(?:=|≤|≥|<|>)\s*[-+]?\d+(?:[.,]\d+)?/giu,
+        /(?<![\p{L}\p{N}])\d{1,2}[/-]\d{1,2}[/-]\d{2,4}(?![\p{L}\p{N}])/gu,
+        /(?<![\p{L}\p{N}])[-+]?\d+(?:[.,]\d+)*(?:\s*%)?(?![\p{L}\p{N}])/gu
+      ];
+      for (const pattern of patterns) found.push(...(normalized.match(pattern) || []));
+      for (const rawTerm of customTerms) {
+        const term = rawTerm.normalize("NFC").trim();
+        if (!term) continue;
+        let offset = 0;
+        while ((offset = normalized.indexOf(term, offset)) !== -1) { found.push(term); offset += term.length; }
+      }
+      return found;
+    }
+
+    function auditInvariants(source, output, customTerms = []) {
+      const expected = new Map(), actual = new Map();
+      extractLockedSegments(source, customTerms).forEach(item => expected.set(item, (expected.get(item) || 0) + 1));
+      extractLockedSegments(output, customTerms).forEach(item => actual.set(item, (actual.get(item) || 0) + 1));
+      const missing = [];
+      for (const [item, count] of expected) {
+        const gap = count - (actual.get(item) || 0);
+        if (gap > 0) missing.push({ item, count: gap });
+      }
+      return { passed: missing.length === 0, checked: [...expected.values()].reduce((sum, count) => sum + count, 0), missing };
+    }
+
     function computeStats(text) {
       const ws = words(text);
       const ss = splitSentences(text);
@@ -1034,6 +1228,8 @@
         average: ss.length ? ws.length / ss.length : 0,
         diversity: ws.length ? unique.size / ws.length : 0,
         readingMinutes: ws.length ? Math.max(1, Math.ceil(ws.length / 220)) : 0,
+        forbiddenCount: 0,
+        vagueCount: 0,
         sentenceList: ss,
         paragraphList: ps
       };
@@ -1047,6 +1243,22 @@
       const hits = [];
       for (const phrase of phrases) {
         const count = countPhrase(text, phrase);
+        if (count) hits.push({ phrase, count });
+      }
+      return hits;
+    }
+
+    function editableOnlyText(text) {
+      return text.split(PROTECTED_SEGMENTS).map((part, index) => index % 2 === 1 ? " " : part).join(" ");
+    }
+
+    function catalogHits(text, catalog) {
+      const editable = editableOnlyText(text).toLocaleLowerCase("vi");
+      const hits = [];
+      for (const phrase of catalog) {
+        let count = 0;
+        if (phrase === "không chỉ… mà còn…") count = (editable.match(/không chỉ[^.!?…\n]{1,180}?mà còn/giu) || []).length;
+        else count = countPhrase(editable, phrase);
         if (count) hits.push({ phrase, count });
       }
       return hits;
@@ -1148,8 +1360,13 @@
       const weakHits = phraseHits(lower, WEAK_PHRASES);
       if (weakHits.length) addIssue(issues, "weak-verbs", "info", "Từ ngữ", "Cụm động từ vòng", "Thử dùng động từ trực tiếp để câu gọn hơn, nhưng giữ nguyên nghĩa chuyên môn.", weakHits.reduce((a, x) => a + x.count, 0), weakHits.map(x => `“${x.phrase}”: ${x.count} lần`));
 
-      const vagueHits = phraseHits(lower, VAGUE_REFERENCES);
-      if (vagueHits.length >= 2) addIssue(issues, "vague-reference", "info", "Mạch ý", "Tham chiếu có thể mơ hồ", "Với mỗi “điều này/vấn đề này”, kiểm tra xem người đọc có xác định ngay đối tượng được nói tới không.", vagueHits.reduce((a, x) => a + x.count, 0), vagueHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+      const forbiddenHits = catalogHits(text, FORBIDDEN_PHRASES);
+      stats.forbiddenCount = forbiddenHits.reduce((sum, item) => sum + item.count, 0);
+      if (forbiddenHits.length) addIssue(issues, "v3-formulas", "warning", "Bộ lọc V3", "Có cụm diễn đạt theo khuôn", "Xác định chức năng thật của câu rồi viết trực tiếp từ quan hệ nội dung; không thay bằng một cụm khuôn khác.", stats.forbiddenCount, forbiddenHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+
+      const vagueHits = catalogHits(text, VAGUE_REFERENCES);
+      stats.vagueCount = vagueHits.reduce((sum, item) => sum + item.count, 0);
+      if (vagueHits.length) addIssue(issues, "vague-reference", "warning", "Bộ lọc V3", "Có cách chỉ trỏ cần xác định chủ thể", "Gọi đúng tác giả, dữ liệu, kết quả, hành động hoặc lập luận đã có. Nếu đầu vào không đủ dữ kiện, không tự đoán.", stats.vagueCount, vagueHits.map(x => `“${x.phrase}”: ${x.count} lần`));
 
       const passiveCount = (lower.match(/(^|[^\p{L}])(được|bị)(?=\s)/gu) || []).length;
       if (stats.words >= 120 && passiveCount / stats.words > .035) addIssue(issues, "passive", "info", "Câu", "Mật độ cấu trúc “được/bị” khá cao", "Bị động không sai. Chỉ đổi sang chủ động khi tác nhân quan trọng và đã biết.", passiveCount);
@@ -1179,6 +1396,15 @@
       }
       const duplicateParagraphOpeners = [...pOpeners.entries()].filter(([, n]) => n >= 2 && ps.length >= 4);
       if (duplicateParagraphOpeners.length) addIssue(issues, "paragraph-opener", "info", "Đoạn", "Mở đầu đoạn bị lặp", "Kiểm tra vai trò từng đoạn và dùng câu chủ đề phù hợp với luận điểm, không đổi chỉ để khác bề mặt.", duplicateParagraphOpeners.length, duplicateParagraphOpeners.map(([x, n]) => `“${x}…”: ${n} đoạn`));
+
+      const quantityGroups = new Map();
+      for (const match of text.matchAll(/(?<![\p{L}\p{N}])(\d+(?:[.,]\d+)?)\s*(người|học sinh|sinh viên|giáo viên|mẫu|phiếu|trường|lớp)\b/giu)) {
+        const unit = match[2].toLocaleLowerCase("vi");
+        if (!quantityGroups.has(unit)) quantityGroups.set(unit, new Set());
+        quantityGroups.get(unit).add(match[1]);
+      }
+      const possibleConflicts = [...quantityGroups.entries()].filter(([, values]) => values.size > 1);
+      if (possibleConflicts.length) addIssue(issues, "numeric-conflict", "warning", "Dữ kiện", "Có các giá trị cùng đơn vị cần đối chiếu", "Các giá trị có thể nói về nhóm khác nhau hoặc có thể mâu thuẫn. Không tự chọn, gộp hay tính trung bình khi ngữ cảnh chưa rõ.", possibleConflicts.length, possibleConflicts.map(([unit, values]) => `${[...values].join(" / ")} ${unit}`));
 
       const statisticSentences = ss.filter(s => /\b\d+(?:[.,]\d+)?\s*%|\b\d{3,}\b/.test(s) && !/(\[[0-9]+\]|\([^)]*\d{4}[^)]*\)|https?:\/\/|doi\s*:|nguồn\s*:\s*\S+|theo\s+[^,.]{2,45}\(\s*\d{4}\s*\))/i.test(s));
       if (statisticSentences.length) addIssue(issues, "statistics-source", "warning", "Nguồn dẫn", "Số liệu có thể thiếu nguồn hoặc ngữ cảnh", "Xác minh số liệu, đơn vị, thời điểm, phạm vi mẫu và dẫn nguồn phù hợp.", statisticSentences.length, statisticSentences.map(excerpt));
@@ -1226,6 +1452,8 @@
       $("#statParagraphs").textContent = stats.paragraphs.toLocaleString("vi-VN");
       $("#statAverage").textContent = stats.average ? stats.average.toFixed(1) : "0";
       $("#statDiversity").textContent = `${Math.round(stats.diversity * 100)}%`;
+      $("#statForbidden").textContent = (stats.forbiddenCount || 0).toLocaleString("vi-VN");
+      $("#statVague").textContent = (stats.vagueCount || 0).toLocaleString("vi-VN");
       $("#statQuality").textContent = score === null ? "—" : score;
       els.qualityValue.textContent = score === null ? "—" : score;
       els.qualityBar.style.width = `${score || 0}%`;
@@ -1241,14 +1469,14 @@
         els.qualityLabel.textContent = "Cần biên tập kỹ";
       }
       els.qualityHelp.textContent = score === null
-        ? "Dán văn bản rồi chọn “Phân tích 30 tiêu chí”. Điểm này phản ánh độ rõ ràng theo quy tắc, không phải xác suất AI."
-        : "Điểm quy tắc về độ rõ ràng và trình bày; không đánh giá tác giả, tính đúng của kiến thức hay xác suất AI.";
+        ? "Dán văn bản rồi chọn “Kiểm tra toàn diện”. Điểm này phản ánh độ rõ ràng theo quy tắc, không phải xác suất AI."
+        : "Điểm quy tắc về độ rõ ràng, 100 cụm khuôn mẫu và 35 cách chỉ trỏ; không đánh giá tác giả hay xác suất AI.";
     }
 
     function renderIssues() {
       const filtered = state.activeFilter === "all" ? state.issues : state.issues.filter(i => i.severity === state.activeFilter);
       if (!filtered.length) {
-        els.issueList.innerHTML = `<div class="empty-state"><strong>${state.issues.length ? "Không có mục trong bộ lọc này" : "Không phát hiện vấn đề theo 30 quy tắc"}</strong>Vẫn cần người viết kiểm tra sự thật, lập luận, nguồn và yêu cầu của thể loại.</div>`;
+        els.issueList.innerHTML = `<div class="empty-state"><strong>${state.issues.length ? "Không có mục trong bộ lọc này" : "Không phát hiện vấn đề theo bộ quy tắc"}</strong>Vẫn cần người viết kiểm tra sự thật, lập luận, nguồn và yêu cầu của thể loại.</div>`;
         return;
       }
       els.issueList.innerHTML = "";
@@ -1376,7 +1604,7 @@
       renderIssues();
       updateSummary();
       renderCompare();
-      if (showMessage) toast(`Đã kiểm tra ${METHODS.length} tiêu chí: ${state.issues.length} nhóm cần xem lại.`);
+      if (showMessage) toast(`Đã kiểm tra ${METHODS.length} tiêu chí, 100 cụm khuôn và 35 cách chỉ trỏ: ${state.issues.length} nhóm cần xem lại.`);
     }
 
     function pushUndo() {
@@ -1389,44 +1617,95 @@
       const source = els.input.value;
       if (!source.trim()) { toast("Chưa có văn bản để dọn định dạng."); return; }
       pushUndo();
-      const cleaned = removeDuplicateWords(safeClean(source));
+      const proposed = removeDuplicateWords(safeClean(source));
+      const lockedTerms = $("#lockedTerms").value.split(/[;\n]+/).map(item => item.trim()).filter(Boolean);
+      const invariant = auditInvariants(source, proposed, lockedTerms);
+      const blocked = $("#integrityLock").checked && !invariant.passed;
+      const cleaned = blocked ? source : proposed;
       els.output.value = cleaned;
       state.lastGenerated = cleaned;
       state.changeLevel = "";
-      state.changeLog = source === cleaned ? [] : [{ id: "technical", title: "Dọn lỗi kỹ thuật", description: "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", count: 1 }];
-      state.authorPrompts = [];
+      state.changeLog = blocked
+        ? [{ id: "integrity-block", title: "Cổng bảo toàn đã chặn đầu ra", description: "Dọn định dạng làm thay đổi một mục bất biến; ứng dụng trả lại bản gốc.", count: invariant.missing.length }]
+        : source === cleaned ? [] : [{ id: "technical", title: "Dọn lỗi kỹ thuật", description: "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", count: 1 }];
+      state.authorPrompts = blocked ? ["Cần kiểm tra: nội dung trong phần được bảo vệ có khoảng trắng hoặc ký tự cần giữ nguyên."] : [];
+      state.lastInvariant = invariant;
       renderChangeLog();
-      $("#outputState").textContent = source === cleaned ? "Không có lỗi kỹ thuật" : "Đã dọn định dạng";
+      renderGuardStatus(state.lastInvariant, $("#integrityLock").checked);
+      $("#outputState").textContent = blocked ? "Đã chặn · dữ kiện chưa toàn vẹn" : source === cleaned ? "Không có lỗi kỹ thuật" : "Đã dọn định dạng";
       updateCounters();
       renderCompare();
       runAnalysis(false);
-      const changed = source === cleaned ? "Không có lỗi định dạng an toàn cần sửa." : "Đã tạo bản làm việc và chỉ sửa lỗi kỹ thuật an toàn.";
+      const changed = blocked ? "Cổng bảo toàn đã chặn thay đổi và trả lại bản gốc." : source === cleaned ? "Không có lỗi định dạng an toàn cần sửa." : "Đã tạo bản làm việc và chỉ sửa lỗi kỹ thuật an toàn.";
       toast(changed);
+    }
+
+    function renderGuardStatus(report, enabled = true) {
+      const guard = $("#guardStatus");
+      guard.classList.remove("guard-ok", "guard-error");
+      if (!enabled) {
+        guard.innerHTML = "<strong>5</strong> Khóa bảo toàn đang tắt";
+        return;
+      }
+      if (report?.passed) {
+        guard.classList.add("guard-ok");
+        guard.innerHTML = `<strong>5</strong> Đã giữ ${report.checked} mục bất biến`;
+      } else if (report) {
+        guard.classList.add("guard-error");
+        guard.innerHTML = `<strong>5</strong> Đã chặn ${report.missing.length} sai lệch`;
+      } else {
+        guard.classList.add("guard-ok");
+        guard.innerHTML = "<strong>5</strong> Cổng bảo toàn sẵn sàng";
+      }
     }
 
     function createDeepDraft() {
       const source = els.input.value;
       if (!source.trim()) { toast("Chưa có văn bản để biên tập."); els.input.focus(); return; }
-      pushUndo();
       const level = $("#editDepth").value;
-      const result = deepEdit(source, level);
-      els.output.value = result.text;
-      state.lastGenerated = result.text;
+      const audience = $("#audienceMode").value;
+      const scope = $("#scopeMode").value;
+      const integrityLock = $("#integrityLock").checked;
+      const lockedTerms = $("#lockedTerms").value.split(/[;\n]+/).map(item => item.trim()).filter(Boolean);
+      let start = 0, end = source.length;
+      if (scope === "selection") {
+        start = els.input.selectionStart;
+        end = els.input.selectionEnd;
+        if (start === end) { toast("Hãy bôi chọn phần cần sửa trong ô Văn bản gốc."); els.input.focus(); return; }
+      }
+      pushUndo();
+      const target = source.slice(start, end);
+      const result = deepEdit(target, level, { audience, integrityLock, lockedTerms });
+      const finalText = source.slice(0, start) + result.text + source.slice(end);
+      const wholeInvariant = auditInvariants(source, finalText, lockedTerms);
+      els.output.value = finalText;
+      state.lastGenerated = finalText;
       state.changeLog = result.logs;
       state.changeLevel = result.level;
       state.authorPrompts = result.prompts;
+      state.lastInvariant = wholeInvariant;
       renderChangeLog();
       updateCounters();
       renderCompare();
       runAnalysis(false);
+      renderGuardStatus(wholeInvariant, integrityLock);
+      if (result.auditOnly) {
+        $("#outputState").textContent = `Đã kiểm toán · ${state.issues.length} nhóm cần xem`;
+        switchTab("suggestions");
+        toast("Đã kiểm toán Mức C; văn bản chưa bị sửa.");
+        return;
+      }
       switchTab("changes");
       const total = result.logs.reduce((sum, item) => sum + item.count, 0);
-      if (result.substantial) {
-        $("#outputState").textContent = `Đã ${EDIT_LEVEL_LABELS[level].toLocaleLowerCase("vi")} · ${result.metrics.outputParagraphs} đoạn`;
-        toast(`Đã biên tập ${total} vị trí thuộc ${result.logs.length} nhóm; hãy đọc lại bản làm việc.`);
+      if (result.blocked || (integrityLock && !wholeInvariant.passed)) {
+        $("#outputState").textContent = "Đã chặn · dữ kiện chưa toàn vẹn";
+        toast("Cổng bảo toàn phát hiện sai lệch và đã trả lại phần gốc.");
+      } else if (result.substantial) {
+        $("#outputState").textContent = `${EDIT_LEVEL_LABELS[level]} · ${AUDIENCE_LABELS[audience]} · ${paragraphs(finalText).length} đoạn`;
+        toast(`Đã xử lý ${total} vị trí thuộc ${result.logs.length} nhóm; cổng bảo toàn đã kiểm tra đầu ra.`);
       } else {
         $("#outputState").textContent = total ? "Thay đổi rất ít · cần tự rà soát" : "Chưa có cấu trúc phù hợp để sửa";
-        toast(total ? "Mức thay đổi thực tế còn thấp nên công cụ không báo “đã sửa sâu”. Hãy xem gợi ý và tự rà soát." : "Không có mẫu phù hợp để tự sửa; hãy xem phần gợi ý.");
+        toast(total ? "Mức thay đổi thực tế còn thấp; hãy xem nhật ký và tự rà soát." : "Không có mẫu phù hợp để tự sửa; hãy xem phần gợi ý.");
       }
     }
 
@@ -1464,9 +1743,10 @@
       if (!state.stats) { toast("Hãy phân tích văn bản trước khi xuất báo cáo."); return; }
       const score = qualityScore(state.issues, state.stats);
       const report = {
-        app: "VietDraft Offline", version: "1.2.0", exportedAt: new Date().toISOString(),
+        app: "VietDraft Offline", version: "2.0.0", exportedAt: new Date().toISOString(),
         note: "Điểm rõ ràng theo quy tắc; không phải xác suất AI và không xác định tác giả.",
-        statistics: { words: state.stats.words, sentences: state.stats.sentences, paragraphs: state.stats.paragraphs, averageWordsPerSentence: Number(state.stats.average.toFixed(2)), lexicalDiversity: Number(state.stats.diversity.toFixed(4)), clarityScore: score },
+        statistics: { words: state.stats.words, sentences: state.stats.sentences, paragraphs: state.stats.paragraphs, averageWordsPerSentence: Number(state.stats.average.toFixed(2)), lexicalDiversity: Number(state.stats.diversity.toFixed(4)), v3FormulaCount: state.stats.forbiddenCount || 0, vagueReferenceCount: state.stats.vagueCount || 0, clarityScore: score },
+        invariantGate: state.lastInvariant,
         issues: state.issues
       };
       downloadBlob(JSON.stringify(report, null, 2), "vietdraft-bao-cao.json", "application/json;charset=utf-8");
@@ -1475,14 +1755,25 @@
 
     function saveLocal() {
       try {
-        localStorage.setItem("vietdraft-content", JSON.stringify({ input: els.input.value, output: els.output.value }));
+        localStorage.setItem("vietdraft-content", JSON.stringify({
+          input: els.input.value, output: els.output.value, level: $("#editDepth").value,
+          audience: $("#audienceMode").value, scope: $("#scopeMode").value, integrityLock: $("#integrityLock").checked,
+          lockedTerms: $("#lockedTerms").value
+        }));
       } catch { /* Trình duyệt có thể chặn localStorage khi mở tệp. */ }
     }
 
     function loadLocal() {
       try {
         const saved = JSON.parse(localStorage.getItem("vietdraft-content") || "null");
-        if (saved) { els.input.value = saved.input || ""; els.output.value = saved.output || ""; }
+        if (saved) {
+          els.input.value = saved.input || ""; els.output.value = saved.output || "";
+          if (EDIT_LEVEL_LABELS[saved.level]) $("#editDepth").value = saved.level;
+          if (AUDIENCE_LABELS[saved.audience]) $("#audienceMode").value = saved.audience;
+          if (["all", "selection"].includes(saved.scope)) $("#scopeMode").value = saved.scope;
+          if (typeof saved.integrityLock === "boolean") $("#integrityLock").checked = saved.integrityLock;
+          if (typeof saved.lockedTerms === "string") $("#lockedTerms").value = saved.lockedTerms;
+        }
       } catch { /* Bỏ qua dữ liệu cục bộ lỗi. */ }
     }
 
@@ -1511,9 +1802,9 @@
       if (els.input.value.trim() && !confirm("Thay nội dung hiện tại bằng văn bản mẫu?")) return;
       els.input.value = sample;
       els.output.value = "";
-      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; renderChangeLog();
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; renderChangeLog(); renderGuardStatus();
       updateCounters();
-      toast("Đã nạp văn bản mẫu. Chọn Phân tích để xem kết quả.");
+      toast("Đã nạp văn bản mẫu. Chọn Kiểm tra toàn diện hoặc Xử lý văn bản.");
     }
 
     function initTheme() {
@@ -1537,7 +1828,7 @@
         const text = await file.text();
         els.input.value = text;
         els.output.value = "";
-        state.undoStack = []; state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; renderChangeLog();
+        state.undoStack = []; state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; renderChangeLog(); renderGuardStatus();
         updateCounters();
         toast(`Đã nhập ${file.name}.`);
       } catch { toast("Không đọc được tệp này."); }
@@ -1548,8 +1839,8 @@
     $("#clearBtn").addEventListener("click", () => {
       if ((els.input.value || els.output.value) && !confirm("Xóa toàn bộ văn bản gốc, bản làm việc và kết quả phân tích?")) return;
       els.input.value = ""; els.output.value = ""; state.issues = []; state.stats = null; state.undoStack = [];
-      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = [];
-      clearLocal(); updateCounters(); updateSummary(); renderIssues(); renderStats(computeStats(""), null); renderCompare(); renderChangeLog();
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null;
+      clearLocal(); updateCounters(); updateSummary(); renderIssues(); renderStats(computeStats(""), null); renderCompare(); renderChangeLog(); renderGuardStatus();
       $("#undoBtn").disabled = true; toast("Đã xóa nội dung trên thiết bị.");
     });
     $("#cleanBtn").addEventListener("click", createSafeDraft);
@@ -1565,7 +1856,7 @@
     $("#undoBtn").addEventListener("click", () => {
       if (!state.undoStack.length) return;
       els.output.value = state.undoStack.pop(); state.lastGenerated = els.output.value;
-      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; renderChangeLog();
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; state.lastInvariant = null; renderChangeLog(); renderGuardStatus();
       $("#outputState").textContent = "Đã hoàn tác";
       $("#undoBtn").disabled = state.undoStack.length === 0; updateCounters(); renderCompare(); toast("Đã hoàn tác bản làm việc.");
     });
@@ -1578,6 +1869,12 @@
     els.remember.addEventListener("change", () => {
       if (els.remember.checked) { saveLocal(); toast("Đã bật lưu cục bộ trên thiết bị này."); }
       else { clearLocal(); toast("Đã tắt và xóa bản lưu cục bộ."); }
+    });
+    ["#editDepth", "#audienceMode", "#scopeMode"].forEach(selector => $(selector).addEventListener("change", () => { if (els.remember.checked) saveLocal(); }));
+    $("#lockedTerms").addEventListener("input", () => { if (els.remember.checked) saveLocal(); });
+    $("#integrityLock").addEventListener("change", () => {
+      renderGuardStatus(state.lastInvariant, $("#integrityLock").checked);
+      if (els.remember.checked) saveLocal();
     });
 
     $$(".tab-btn").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
@@ -1613,6 +1910,7 @@
     updateCounters();
     renderCompare();
     renderChangeLog();
+    renderGuardStatus();
   </script>
 </body>
 </html>

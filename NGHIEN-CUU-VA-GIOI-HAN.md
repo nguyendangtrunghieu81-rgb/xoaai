@@ -38,7 +38,7 @@ Mọi cảnh báo đều gắn với một quy tắc có thể hiểu được: 
 
 ## Cách chuyển các gợi ý trong tài liệu tham chiếu thành chức năng an toàn
 
-Các ảnh tham chiếu đề cập việc thay đổi nhịp câu, giảm khẳng định tuyệt đối, sửa câu mở/kết, đổi chủ thể và thêm trải nghiệm cụ thể. Phiên bản 1.2 triển khai phần có thể tự động hóa mà không bịa nội dung:
+Các ảnh tham chiếu và bộ quy tắc diễn đạt V3 đề cập việc thay đổi nhịp câu, sửa câu mở/kết, đổi chủ thể, làm rõ cách chỉ trỏ và thêm trải nghiệm cụ thể. Phiên bản 2.0 chỉ triển khai phần có thể tự động hóa mà không bịa nội dung:
 
 - bỏ các mở đầu như “Trong bối cảnh hiện nay”, “Có thể thấy rằng”;
 - giảm sáo ngữ như “đóng vai trò vô cùng quan trọng”, “một cách hiệu quả”;
@@ -46,9 +46,12 @@ Các ảnh tham chiếu đề cập việc thay đổi nhịp câu, giảm khẳ
 - giữ một từ nối cần thiết và bỏ các lần lặp cùng từ nối trong một đoạn;
 - tách câu dài ở ranh giới “nhưng/tuy nhiên/vì vậy/đồng thời…” khi hai vế đều đủ ý;
 - đổi nhịp câu lặp chủ thể sang cấu trúc “Nhờ…” chỉ khi quan hệ “giúp” đã có sẵn trong câu gốc;
-- ở mức Sửa sâu, hạ một số khẳng định tuyệt đối và so sánh nhất khi văn bản chưa đưa ra tiêu chí hoặc bằng chứng;
+- giữ nguyên mức khẳng định; từ tuyệt đối và so sánh nhất chỉ được đánh dấu để người viết tự đối chiếu với bằng chứng;
 - chia đoạn quá dài tại ranh giới câu gần giữa hai cụm luận điểm;
-- bảo vệ trích dẫn, URL và đoạn mã;
+- bảo vệ số liệu, công thức, tên riêng, trích dẫn, URL, email, đoạn mã và thuật ngữ do người dùng khai báo;
+- quét độc lập 100 cụm diễn đạt theo khuôn và 35 cách chỉ trỏ mơ hồ;
+- làm rõ “Nghiên cứu này”, “Quan điểm này” hoặc “Điều này giúp” chỉ khi câu ngay trước đã cho biết rõ chủ thể;
+- giữ nguyên toàn bộ phần ngoài vùng bôi chọn khi người dùng chọn xử lý một phần;
 - đưa số liệu và trải nghiệm vào danh sách cần người viết xác minh, không tự tạo nội dung thay thế.
 
 Các phép sửa này nhằm cải thiện độ rõ và tính tự nhiên của văn bản. Chúng không được dùng để xác nhận tác giả hoặc cam kết thay đổi kết quả của một bộ dò bên thứ ba.

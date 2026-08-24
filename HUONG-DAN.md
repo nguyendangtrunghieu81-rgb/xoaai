@@ -1,67 +1,80 @@
-# VietDraft Offline 1.2
+# VietDraft Offline 2.0 – Bộ diễn đạt V3
 
-VietDraft Offline là công cụ biên tập tiếng Việt chạy hoàn toàn trong trình duyệt. Công cụ không gọi API, không nạp thư viện ngoài và không gửi văn bản lên máy chủ.
+VietDraft Offline là công cụ biên tập tiếng Việt chạy hoàn toàn trong trình duyệt. Công cụ không gọi API, không tải thư viện ngoài và không gửi văn bản lên máy chủ.
 
-## Khởi động
+## Cách dùng nhanh
 
-1. Giải nén gói ZIP.
-2. Mở `index.html` bằng Chrome, Edge, Firefox hoặc Safari hiện đại.
-3. Dán văn bản vào cột **Văn bản gốc**.
-4. Chọn **Dọn định dạng an toàn** nếu chỉ muốn sửa lỗi kỹ thuật.
-5. Muốn thay đổi rõ hơn, chọn mức **Sửa nhẹ / Sửa cân bằng / Sửa sâu**, rồi nhấn **Biên tập sâu**.
-6. Mở thẻ **Nhật ký sửa** để biết chính xác từng nhóm thay đổi đã được áp dụng.
-7. Chọn **Phân tích 30 tiêu chí**, đọc gợi ý và tự rà soát bản làm việc trước khi sao chép hoặc tải TXT.
+1. Giải nén ZIP và mở `index.html`.
+2. Dán văn bản vào cột **Văn bản gốc**.
+3. Chọn chế độ, người đọc, phạm vi và bật **Khóa dữ kiện**.
+4. Nếu có tên mô hình, thang đo hoặc thuật ngữ buộc giữ, nhập vào ô **Thuật ngữ phải giữ**, cách nhau bằng dấu chấm phẩy.
+5. Nhấn **Xử lý văn bản**.
+6. Đọc **Nhật ký sửa**, **Gợi ý** và **So sánh** trước khi sao chép hoặc tải TXT.
 
-Phím tắt: `Ctrl + Enter` để phân tích; `Ctrl + Shift + Enter` để biên tập sâu; `Ctrl + Shift + C` để sao chép bản làm việc.
+Phím tắt: `Ctrl + Enter` để kiểm tra; `Ctrl + Shift + Enter` để xử lý; `Ctrl + Shift + C` để sao chép bản làm việc.
 
-## Đưa lên GitHub Pages
+## Các chế độ
 
-1. Tạo một repository mới.
-2. Tải các tệp trong thư mục này lên nhánh mặc định, bảo đảm `index.html` nằm ở thư mục gốc.
-3. Vào **Settings → Pages**.
-4. Chọn triển khai từ nhánh mặc định và thư mục gốc.
-5. Khi GitHub cung cấp địa chỉ trang, mở địa chỉ đó trên máy tính hoặc điện thoại.
+- **Mức A – Chỉnh câu:** sửa lời dẫn thừa, câu vòng, lỗi gõ, nhịp và một số cách diễn đạt khó đọc; giữ gần trật tự ý.
+- **Mức A+ – Cân bằng:** thêm bước gọn động từ, giảm liên từ lặp và tách câu dài tại ranh giới logic.
+- **Mức B – Viết lại sâu:** đổi cấu trúc phù hợp, làm rõ một số cách chỉ trỏ khi chủ thể nằm ngay trước đó và tổ chức lại đoạn quá dài.
+- **Mức C – Kiểm toán:** không sửa văn bản; chỉ chạy hệ thống phân tích và nêu phần cần người viết kiểm tra.
 
-Ứng dụng vẫn xử lý văn bản tại thiết bị kể cả khi được mở qua GitHub Pages. Vì không dùng tài nguyên ngoài, có thể lưu tệp `index.html` về máy để dùng khi mất mạng.
+## Chọn người đọc
+
+Ứng dụng hỗ trợ các cấu hình chung, học sinh, phụ huynh, giáo viên, quản lý, học thuật, hành chính và truyền thông. Cấu hình này điều chỉnh ngưỡng tách câu và độ dài đoạn; không tự thêm vai trò, trách nhiệm, ví dụ hoặc kiến thức.
+
+## Chỉ sửa vùng được chọn
+
+1. Chọn **Phạm vi – Vùng bôi chọn**.
+2. Bôi đúng đoạn cần sửa trong ô **Văn bản gốc**.
+3. Nhấn **Xử lý văn bản**.
+
+Phần trước và sau vùng chọn được ghép lại nguyên từng ký tự. Nếu chưa bôi chọn, ứng dụng sẽ dừng và yêu cầu chọn vùng.
+
+## Cổng bảo toàn
+
+Khi bật **Khóa dữ kiện**, ứng dụng đối chiếu đầu vào và đầu ra đối với:
+
+- số liệu, phần trăm, ngày tháng và biểu thức có dấu so sánh;
+- trích dẫn có tác giả/năm;
+- tên riêng nhiều thành tố;
+- URL, DOI và email;
+- nội dung trong dấu nháy;
+- thuật ngữ do người dùng nhập.
+
+Nếu một mục bất biến bị mất hoặc đổi, cổng bảo toàn chặn đầu ra và trả lại phần gốc. Đây là kiểm tra ký tự, không phải kiểm chứng tính đúng của dữ kiện.
+
+## Bộ quy tắc V3
+
+- Quét đúng 100 cụm diễn đạt theo khuôn.
+- Quét riêng đúng 35 cách chỉ trỏ mơ hồ.
+- Không quét nội dung trong trích dẫn nguyên văn, URL, email hoặc đoạn mã.
+- Có thể gộp “Nghiên cứu này…”, “Quan điểm này…” hoặc “Điều này giúp…” với câu ngay trước khi chủ thể đã rõ.
+- Khi thiếu chủ thể, công cụ không đoán và đưa cảnh báo **Cần làm rõ chủ thể**.
+- Giữ mức thận trọng của các câu như “gợi ý rằng”, “có liên hệ với”; không tự biến liên hệ thành nguyên nhân – kết quả.
+- Không tự hạ hoặc nâng mức khẳng định. Các từ tuyệt đối, so sánh nhất hoặc kết luận rộng chỉ được đánh dấu để người viết tự quyết định.
+
+## Phân tích toàn diện
+
+Ngoài 100 + 35 bộ lọc V3, ứng dụng giữ 30 tiêu chí về Unicode, dấu câu, câu/đoạn, nhịp, lặp từ, liên từ, nguồn, viết tắt, danh sách, trải nghiệm cần xác minh và dữ liệu riêng tư. Điểm rõ ràng là điểm quy tắc nội bộ, không phải xác suất AI.
 
 ## Dữ liệu và quyền riêng tư
 
-- Mặc định, nội dung chỉ tồn tại trong ô nhập của trang hiện tại.
-- Tùy chọn **Lưu cục bộ** dùng `localStorage` của chính trình duyệt và chỉ lưu trên thiết bị đang dùng.
-- Tắt tùy chọn **Lưu cục bộ** sẽ xóa bản lưu của ứng dụng trên thiết bị đó.
-- Không có lệnh `fetch`, WebSocket, API AI, bộ theo dõi hoặc tài nguyên CDN trong `index.html`.
+- Mặc định, nội dung chỉ tồn tại trong trang đang mở.
+- **Lưu cục bộ** dùng `localStorage` trên chính thiết bị; tùy chọn chế độ, người đọc, phạm vi và thuật ngữ cũng được lưu cùng văn bản.
+- Không có `fetch`, WebSocket, API AI, bộ theo dõi hoặc CDN trong `index.html`.
 
-## Những gì công cụ tự sửa
+## Đưa lên GitHub Pages
 
-Nút **Dọn định dạng an toàn** chỉ thực hiện các thay đổi cơ học:
+1. Tải các tệp bên trong thư mục này lên gốc repository, bảo đảm `index.html` nằm ở thư mục gốc.
+2. Vào **Settings → Pages** và chọn triển khai từ nhánh mặc định.
+3. Sau khi thay bản cũ, dùng `Ctrl + F5` để xóa bộ nhớ đệm của trình duyệt.
 
-- chuẩn hóa Unicode NFC;
-- loại ký tự ẩn/điều khiển thường gây lỗi;
-- chuẩn hóa xuống dòng và khoảng trắng;
-- sửa khoảng cách phổ biến quanh dấu câu;
-- rút gọn dấu câu bị lặp;
-- xóa từ bị lặp liền nhau do lỗi gõ.
+## Giới hạn cần hiểu
 
-Các thay đổi về lập luận, giọng văn, mức độ khẳng định, trải nghiệm, số liệu và trích dẫn luôn do người viết quyết định.
-
-## Ba mức biên tập
-
-- **Sửa nhẹ:** bỏ lời dẫn thừa, mở đầu khuôn mẫu và một số sáo ngữ rõ ràng; không tự hạ mức khẳng định.
-- **Sửa cân bằng:** thêm bước gọn động từ vòng, giảm liên từ bị lặp và tách câu dài tại ranh giới logic.
-- **Sửa sâu:** thực hiện toàn bộ bước trên, đồng thời đổi nhịp câu mở đầu khi có cấu trúc phù hợp, giảm khẳng định tuyệt đối, thu hẹp khái quát thiếu bằng chứng, giảm so sánh nhất và chia đoạn quá dài.
-
-Biên tập sâu không chèn ngẫu nhiên từ đồng nghĩa. Mỗi thay đổi thuộc một quy tắc xác định và được ghi lại trong thẻ **Nhật ký sửa**. Nội dung đặt trong dấu nháy, URL và đoạn mã được bảo vệ khỏi các phép sửa ngữ nghĩa.
-
-Phiên bản 1.2 xử lý cấu trúc theo từng câu thay vì bỏ qua cả đoạn khi đoạn có trích dẫn, URL hoặc dấu nháy. Một khối văn bản dài sẽ được tổ chức lại thành nhiều đoạn khoảng 130 từ tại ranh giới câu an toàn. Các viết tắt, số thập phân, email, DOI và URL được che tạm khi xác định ranh giới câu để tránh tách nhầm.
-
-Nhãn **Đã sửa sâu** chỉ xuất hiện khi đầu ra có thay đổi thực chất, chẳng hạn có nhiều phép sửa, có thay đổi cấu trúc đủ lớn hoặc một đoạn quá dài đã được chia lại. Nếu thuật toán chỉ sửa rất ít hoặc không tìm thấy cấu trúc phù hợp, trạng thái sẽ nói rõ để người dùng không hiểu nhầm.
-
-Khi gặp số liệu hoặc lời kể trải nghiệm, công cụ chỉ tạo câu hỏi xác minh. Nó không tự thêm nguồn, cỡ mẫu, cuộc phỏng vấn, quan sát hoặc câu chuyện cá nhân.
-
-## Giới hạn bắt buộc phải hiểu
-
-- Điểm rõ ràng là điểm quy tắc nội bộ, không phải xác suất AI.
-- Công cụ không xác định tác giả và không cam kết kết quả trên Turnitin hay bất kỳ bộ dò nào.
-- Công cụ không kiểm chứng sự thật, kiến thức chuyên ngành hoặc bản quyền nguồn dẫn.
-- Không thêm trải nghiệm, khảo sát, phỏng vấn, quan sát hoặc trích dẫn nếu chúng không thật sự tồn tại.
-- Với văn bản quan trọng, luôn đọc lại toàn bộ bản cuối và tuân thủ quy định của cơ sở giáo dục.
+- Thuật toán offline không hiểu ngữ nghĩa như một biên tập viên hoặc mô hình ngôn ngữ; các mẫu không đủ chắc chắn chỉ được cảnh báo.
+- Công cụ không kiểm chứng sự thật, kiến thức chuyên ngành, bản quyền hoặc sự tồn tại của nguồn.
+- Không tự tạo trải nghiệm, khảo sát, số liệu, trích dẫn hoặc ví dụ.
+- Công cụ không xác định tác giả và không cam kết thay đổi kết quả của Turnitin hay bất kỳ bộ dò AI nào.
+- Luôn đọc lại bản cuối và tuân thủ quy định của cơ sở giáo dục hoặc nơi xuất bản.
