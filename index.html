@@ -1,0 +1,1508 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="VietDraft Offline - công cụ biên tập và kiểm tra chất lượng văn bản tiếng Việt ngay trên thiết bị.">
+  <title>VietDraft Offline — Biên tập tiếng Việt</title>
+  <style>
+    :root {
+      --bg: #eef4f5;
+      --surface: #ffffff;
+      --surface-2: #f6f9f9;
+      --text: #17252a;
+      --muted: #607176;
+      --line: #d8e3e5;
+      --primary: #0b6b63;
+      --primary-2: #084f4a;
+      --accent: #d9a320;
+      --danger: #b73b42;
+      --warn: #a35d06;
+      --info: #1769aa;
+      --success: #20805b;
+      --shadow: 0 12px 35px rgba(15, 61, 60, .08);
+      --radius: 18px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f191b;
+      --surface: #162326;
+      --surface-2: #1b2b2e;
+      --text: #edf6f5;
+      --muted: #a8b9bc;
+      --line: #2f4448;
+      --primary: #65c8ba;
+      --primary-2: #a2e0d6;
+      --accent: #f3c75d;
+      --danger: #ff8d94;
+      --warn: #f1ad59;
+      --info: #77baf0;
+      --success: #7bd1aa;
+      --shadow: 0 12px 35px rgba(0, 0, 0, .22);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34rem),
+        var(--bg);
+      font-family: "Segoe UI", Arial, "Noto Sans", sans-serif;
+      line-height: 1.55;
+    }
+
+    button, textarea, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, textarea:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--primary) 32%, transparent);
+      outline-offset: 2px;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      backdrop-filter: blur(16px);
+    }
+
+    .header-inner, .app-main, .footer-inner {
+      width: min(1500px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .header-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: #fff;
+      border-radius: 13px;
+      background: linear-gradient(140deg, #0b6b63, #139d8d);
+      box-shadow: 0 8px 18px rgba(11, 107, 99, .23);
+    }
+    .brand-mark svg { width: 25px; height: 25px; }
+    .brand-text { min-width: 0; }
+    .brand-text strong { display: block; font-size: 1.04rem; letter-spacing: -.01em; }
+    .brand-text span { display: block; color: var(--muted); font-size: .76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .privacy-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid color-mix(in srgb, var(--success) 35%, var(--line));
+      border-radius: 999px;
+      color: var(--success);
+      background: color-mix(in srgb, var(--success) 8%, var(--surface));
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .privacy-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    .icon-btn, .btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--text);
+      background: var(--surface);
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .icon-btn { width: 42px; display: grid; place-items: center; font-size: 1.08rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 14px; font-weight: 700; }
+    .btn:hover, .icon-btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--primary) 42%, var(--line)); }
+    .btn.primary { color: #fff; border-color: #0b6b63; background: linear-gradient(135deg, #0b6b63, #118f81); }
+    [data-theme="dark"] .btn.primary { color: #082b28; border-color: var(--primary); background: var(--primary); }
+    .btn.accent { color: #2f2404; border-color: #d6a52f; background: linear-gradient(135deg, #f4cc62, #dfaa2b); }
+    .btn.ghost { background: var(--surface-2); }
+    .btn.danger { color: var(--danger); }
+    .btn.small { min-height: 34px; padding: 6px 10px; font-size: .82rem; }
+
+    .app-main { padding: 24px 0 40px; }
+
+    .notice {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 13px 15px;
+      border: 1px solid color-mix(in srgb, var(--info) 25%, var(--line));
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--info) 6%, var(--surface));
+      color: var(--muted);
+      font-size: .87rem;
+    }
+    .notice strong { color: var(--text); }
+    .notice-icon { color: var(--info); font-weight: 900; }
+    .notice button { border: 0; color: var(--muted); background: transparent; padding: 0 3px; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .tool-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .remember-label { display: inline-flex; align-items: center; gap: 7px; padding: 0 7px; color: var(--muted); font-size: .82rem; }
+    .remember-label input { width: 17px; height: 17px; accent-color: var(--primary); }
+    .mode-select {
+      min-height: 40px;
+      padding: 8px 32px 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--text);
+      background: var(--surface-2);
+      font-weight: 700;
+    }
+
+    .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .editor-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .editor-title { display: flex; align-items: center; gap: 9px; font-weight: 800; }
+    .editor-title .step { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--surface)); font-size: .8rem; }
+    .editor-status { color: var(--muted); font-size: .76rem; }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+      border: 0;
+      border-radius: 0;
+      padding: 18px;
+      color: var(--text);
+      background: var(--surface);
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.72;
+      tab-size: 4;
+    }
+    textarea::placeholder { color: color-mix(in srgb, var(--muted) 72%, transparent); }
+    .editor-foot {
+      min-height: 49px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      background: var(--surface-2);
+      font-size: .78rem;
+    }
+    .editor-foot .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .stat-card {
+      min-width: 0;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+    .stat-card span { display: block; color: var(--muted); font-size: .73rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-card strong { display: block; margin-top: 2px; font-size: 1.25rem; letter-spacing: -.02em; }
+    .score-ring { color: var(--primary); }
+
+    .analysis-panel {
+      margin-top: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .tabs {
+      display: flex;
+      gap: 3px;
+      overflow-x: auto;
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .tab-btn { flex: 0 0 auto; border: 0; border-radius: 10px; padding: 9px 13px; color: var(--muted); background: transparent; font-weight: 750; }
+    .tab-btn.active { color: var(--primary-2); background: color-mix(in srgb, var(--primary) 11%, var(--surface)); }
+    .tab-panel { display: none; padding: 18px; }
+    .tab-panel.active { display: block; }
+
+    .overview-grid { display: grid; grid-template-columns: minmax(250px, .75fr) minmax(0, 1.25fr); gap: 18px; }
+    .quality-card { padding: 20px; border-radius: 16px; background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 12%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--line)); }
+    .quality-value { font-size: 3rem; line-height: 1; font-weight: 850; letter-spacing: -.05em; color: var(--primary); }
+    .quality-value small { font-size: 1rem; color: var(--muted); letter-spacing: 0; }
+    .quality-card h3 { margin: 12px 0 4px; }
+    .quality-card p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .quality-bar { height: 10px; margin-top: 18px; overflow: hidden; border-radius: 99px; background: var(--line); }
+    .quality-bar i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--danger), var(--accent), var(--success)); transition: width .35s ease; }
+    .summary-box h3 { margin: 0 0 10px; }
+    .summary-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .summary-item { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+    .summary-item strong { display: block; font-size: 1.35rem; }
+    .summary-item span { color: var(--muted); font-size: .77rem; }
+    .summary-item.error strong { color: var(--danger); }
+    .summary-item.warning strong { color: var(--warn); }
+    .summary-item.info strong { color: var(--info); }
+    .integrity-note { margin-top: 12px; padding: 12px; border-left: 4px solid var(--accent); border-radius: 8px; color: var(--muted); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); font-size: .84rem; }
+
+    .filter-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 13px; }
+    .filter-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-btn { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: var(--muted); background: var(--surface); font-size: .78rem; }
+    .filter-btn.active { color: var(--primary-2); border-color: color-mix(in srgb, var(--primary) 45%, var(--line)); background: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
+    .issue-list { display: grid; gap: 9px; }
+    .issue-card { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 11px; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-2); }
+    .issue-dot { width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--info); }
+    .issue-card[data-severity="error"] .issue-dot { background: var(--danger); }
+    .issue-card[data-severity="warning"] .issue-dot { background: var(--warn); }
+    .issue-card h4 { margin: 0; font-size: .93rem; }
+    .issue-card p { margin: 3px 0 0; color: var(--muted); font-size: .83rem; }
+    .issue-sample { margin-top: 7px; padding: 7px 9px; border-radius: 8px; color: var(--text); background: var(--surface); font-size: .79rem; overflow-wrap: anywhere; }
+    .issue-meta { color: var(--muted); white-space: nowrap; font-size: .72rem; }
+    .empty-state { padding: 34px 18px; text-align: center; color: var(--muted); }
+    .empty-state strong { display: block; margin-bottom: 4px; color: var(--text); }
+
+    .change-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 14px; }
+    .change-summary > div { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+    .change-summary span { display: block; color: var(--muted); font-size: .73rem; }
+    .change-summary strong { display: block; margin-top: 2px; font-size: 1.15rem; }
+    .change-list { display: grid; gap: 9px; }
+    .change-card { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 11px; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-2); }
+    .change-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; color: var(--success); background: color-mix(in srgb, var(--success) 11%, var(--surface)); font-weight: 900; }
+    .change-card h4 { margin: 0; font-size: .9rem; }
+    .change-card p { margin: 3px 0 0; color: var(--muted); font-size: .8rem; }
+    .change-card > strong { color: var(--primary); font-size: .82rem; white-space: nowrap; }
+    .author-prompts { margin-top: 14px; padding: 13px; border-left: 4px solid var(--info); border-radius: 10px; background: color-mix(in srgb, var(--info) 7%, var(--surface)); }
+    .author-prompts h3 { margin: 0 0 6px; font-size: .92rem; }
+    .author-prompts ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: .82rem; }
+    .author-prompts li + li { margin-top: 4px; }
+
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .compare-box { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-2); }
+    .compare-box h3 { margin: 0 0 8px; font-size: .92rem; }
+    .compare-text { max-height: 340px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: .85rem; line-height: 1.65; }
+    mark.removed { color: color-mix(in srgb, var(--danger) 82%, var(--text)); background: color-mix(in srgb, var(--danger) 16%, transparent); text-decoration: line-through; }
+    mark.added { color: color-mix(in srgb, var(--success) 82%, var(--text)); background: color-mix(in srgb, var(--success) 16%, transparent); }
+
+    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .method-card { padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-2); }
+    .method-card .num { display: inline-grid; place-items: center; width: 25px; height: 25px; margin-bottom: 8px; border-radius: 8px; color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--surface)); font-size: .72rem; font-weight: 850; }
+    .method-card h4 { margin: 0 0 4px; font-size: .88rem; }
+    .method-card p { margin: 0; color: var(--muted); font-size: .77rem; }
+
+    .app-footer { border-top: 1px solid var(--line); color: var(--muted); background: var(--surface); }
+    .footer-inner { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .77rem; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 90; display: none; place-items: center; padding: 18px; background: rgba(4, 14, 16, .68); }
+    .modal-backdrop.open { display: grid; }
+    .modal { width: min(620px, 100%); max-height: min(760px, calc(100vh - 36px)); overflow: auto; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: 0 24px 70px rgba(0,0,0,.3); }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+    .modal-head h2 { margin: 0; font-size: 1.05rem; }
+    .modal-body { padding: 18px; color: var(--muted); font-size: .9rem; }
+    .modal-body h3 { color: var(--text); font-size: .95rem; }
+    .modal-body li + li { margin-top: 6px; }
+    .modal-foot { display: flex; justify-content: flex-end; padding: 0 18px 18px; }
+
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 120; max-width: min(410px, calc(100% - 36px)); padding: 11px 14px; border-radius: 12px; color: #fff; background: #173a3d; box-shadow: 0 14px 35px rgba(0,0,0,.26); opacity: 0; transform: translateY(14px); pointer-events: none; transition: .2s ease; font-size: .86rem; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+
+    @media (max-width: 980px) {
+      .editor-grid, .overview-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .method-grid { grid-template-columns: repeat(2, 1fr); }
+      textarea { min-height: 330px; }
+    }
+
+    @media (max-width: 620px) {
+      .header-inner, .app-main, .footer-inner { width: min(100% - 20px, 1500px); }
+      .header-inner { min-height: 66px; }
+      .brand-text span, .privacy-pill { display: none; }
+      .app-main { padding-top: 14px; }
+      .notice { grid-template-columns: auto 1fr; }
+      .notice button { display: none; }
+      .toolbar, .tool-group { align-items: stretch; }
+      .toolbar > .tool-group { width: 100%; }
+      .tool-group .btn { flex: 1 1 auto; }
+      .mode-select { flex: 1 1 150px; }
+      .editor-grid { gap: 10px; }
+      textarea { min-height: 300px; padding: 14px; font-size: .95rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .tab-panel { padding: 13px; }
+      .summary-list { grid-template-columns: 1fr 1fr 1fr; }
+      .compare-grid, .method-grid { grid-template-columns: 1fr; }
+      .change-summary { grid-template-columns: 1fr; }
+      .issue-card { grid-template-columns: auto 1fr; }
+      .issue-meta { grid-column: 2; }
+      .footer-inner { min-height: 76px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; }
+    }
+
+    @media print {
+      .app-header, .toolbar, .editor-grid, .stats-grid, .tabs, .app-footer, .notice { display: none !important; }
+      body, .analysis-panel { background: #fff; box-shadow: none; }
+      .analysis-panel { border: 0; }
+      .tab-panel { display: none !important; }
+      #panel-suggestions { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4.5h5.5A2.5 2.5 0 0 1 12 7v12a3 3 0 0 0-3-3H4z"/><path d="M20 4.5h-5.5A2.5 2.5 0 0 0 12 7v12a3 3 0 0 1 3-3h5z"/><path d="m7 10 1.2 1.2L10.5 9"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <strong>VietDraft Offline</strong>
+          <span>Biên tập tiếng Việt · Không máy chủ · Không API</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="privacy-pill" id="privacyStatus">Xử lý tại thiết bị</span>
+        <button class="icon-btn" id="themeBtn" type="button" title="Đổi giao diện" aria-label="Đổi giao diện">◐</button>
+        <button class="icon-btn" id="aboutBtn" type="button" title="Giới thiệu và giới hạn" aria-label="Giới thiệu và giới hạn">?</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="notice" id="notice" aria-label="Lưu ý quan trọng">
+      <span class="notice-icon" aria-hidden="true">ⓘ</span>
+      <div><strong>Đây là công cụ biên tập, không phải máy dò hoặc công cụ né AI.</strong> Kết quả giúp phát hiện mẫu câu khó đọc, lặp, mơ hồ và lỗi trình bày; không chứng minh văn bản do người hay máy viết.</div>
+      <button id="closeNotice" type="button" aria-label="Đóng thông báo">×</button>
+    </section>
+
+    <section class="toolbar" aria-label="Thanh công cụ">
+      <div class="tool-group">
+        <input class="sr-only" id="fileInput" type="file" accept=".txt,.md,text/plain,text/markdown">
+        <button class="btn ghost" id="importBtn" type="button">↥ Nhập TXT/MD</button>
+        <button class="btn ghost" id="sampleBtn" type="button">Văn bản mẫu</button>
+        <button class="btn danger" id="clearBtn" type="button">Xóa nội dung</button>
+      </div>
+      <div class="tool-group">
+        <label class="remember-label" title="Chỉ lưu trong trình duyệt trên thiết bị này">
+          <input id="rememberToggle" type="checkbox"> Lưu cục bộ
+        </label>
+        <button class="btn ghost" id="cleanBtn" type="button">Dọn định dạng an toàn</button>
+        <label class="sr-only" for="editDepth">Mức biên tập</label>
+        <select class="mode-select" id="editDepth" title="Chọn mức thay đổi văn bản">
+          <option value="light">Sửa nhẹ</option>
+          <option value="balanced">Sửa cân bằng</option>
+          <option value="deep" selected>Sửa sâu</option>
+        </select>
+        <button class="btn accent" id="rewriteBtn" type="button">✦ Biên tập sâu</button>
+        <button class="btn primary" id="analyzeBtn" type="button">Phân tích 30 tiêu chí</button>
+      </div>
+    </section>
+
+    <section class="editor-grid" aria-label="Khu vực biên tập hai cột">
+      <article class="editor-card">
+        <div class="editor-head">
+          <div class="editor-title"><span class="step">1</span> Văn bản gốc</div>
+          <span class="editor-status" id="inputReadTime">0 phút đọc</span>
+        </div>
+        <label class="sr-only" for="inputText">Dán văn bản cần biên tập</label>
+        <textarea id="inputText" spellcheck="true" placeholder="Dán văn bản tiếng Việt vào đây…&#10;&#10;Mẹo: Ctrl + Enter để phân tích. Văn bản không được gửi ra Internet."></textarea>
+        <div class="editor-foot">
+          <span id="inputCounter">0 từ · 0 ký tự · 0 đoạn</span>
+          <div class="actions">
+            <button class="btn small ghost" id="selectAllBtn" type="button">Chọn hết</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="editor-card">
+        <div class="editor-head">
+          <div class="editor-title"><span class="step">2</span> Bản làm việc</div>
+          <span class="editor-status" id="outputState">Có thể chỉnh trực tiếp</span>
+        </div>
+        <label class="sr-only" for="outputText">Bản làm việc sau biên tập</label>
+        <textarea id="outputText" spellcheck="true" placeholder="Bản đã dọn định dạng hoặc nội dung thầy/cô tự chỉnh sẽ xuất hiện ở đây…"></textarea>
+        <div class="editor-foot">
+          <span id="outputCounter">0 từ · 0 ký tự · 0 đoạn</span>
+          <div class="actions">
+            <button class="btn small ghost" id="undoBtn" type="button" disabled>Hoàn tác</button>
+            <button class="btn small ghost" id="copyBtn" type="button">Sao chép</button>
+            <button class="btn small ghost" id="downloadBtn" type="button">Tải TXT</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="stats-grid" aria-label="Thống kê văn bản">
+      <div class="stat-card"><span>Số từ</span><strong id="statWords">0</strong></div>
+      <div class="stat-card"><span>Số câu</span><strong id="statSentences">0</strong></div>
+      <div class="stat-card"><span>Số đoạn</span><strong id="statParagraphs">0</strong></div>
+      <div class="stat-card"><span>Từ/câu trung bình</span><strong id="statAverage">0</strong></div>
+      <div class="stat-card"><span>Đa dạng từ vựng</span><strong id="statDiversity">0%</strong></div>
+      <div class="stat-card"><span>Điểm rõ ràng</span><strong class="score-ring" id="statQuality">—</strong></div>
+    </section>
+
+    <section class="analysis-panel" aria-label="Kết quả phân tích">
+      <nav class="tabs" aria-label="Các bảng kết quả">
+        <button class="tab-btn active" type="button" data-tab="overview">Tổng quan</button>
+        <button class="tab-btn" type="button" data-tab="suggestions">Gợi ý <span id="issueBadge">0</span></button>
+        <button class="tab-btn" type="button" data-tab="changes">Nhật ký sửa <span id="changeBadge">0</span></button>
+        <button class="tab-btn" type="button" data-tab="compare">So sánh</button>
+        <button class="tab-btn" type="button" data-tab="methods">30 phương pháp</button>
+      </nav>
+
+      <div class="tab-panel active" id="panel-overview">
+        <div class="overview-grid">
+          <div class="quality-card">
+            <div class="quality-value"><span id="qualityValue">—</span><small>/100</small></div>
+            <h3 id="qualityLabel">Chưa phân tích</h3>
+            <p id="qualityHelp">Dán văn bản rồi chọn “Phân tích 30 tiêu chí”. Điểm này phản ánh độ rõ ràng theo quy tắc, không phải xác suất AI.</p>
+            <div class="quality-bar" aria-hidden="true"><i id="qualityBar"></i></div>
+          </div>
+          <div class="summary-box">
+            <h3>Các điểm cần người viết xem lại</h3>
+            <div class="summary-list">
+              <div class="summary-item error"><strong id="errorCount">0</strong><span>Lỗi kỹ thuật</span></div>
+              <div class="summary-item warning"><strong id="warningCount">0</strong><span>Cần cân nhắc</span></div>
+              <div class="summary-item info"><strong id="infoCount">0</strong><span>Gợi ý nâng cao</span></div>
+            </div>
+            <div class="integrity-note"><strong>Nguyên tắc liêm chính:</strong> chỉ thêm trải nghiệm, số liệu, trích dẫn hoặc nhận xét cá nhân khi đó là thông tin có thật và có thể kiểm chứng. Công cụ không tự bịa các yếu tố này.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-suggestions">
+        <div class="filter-row">
+          <div class="filter-buttons" role="group" aria-label="Lọc gợi ý">
+            <button class="filter-btn active" type="button" data-filter="all">Tất cả</button>
+            <button class="filter-btn" type="button" data-filter="error">Lỗi kỹ thuật</button>
+            <button class="filter-btn" type="button" data-filter="warning">Cần cân nhắc</button>
+            <button class="filter-btn" type="button" data-filter="info">Nâng cao</button>
+          </div>
+          <button class="btn small ghost" id="exportReportBtn" type="button">Xuất báo cáo JSON</button>
+        </div>
+        <div class="issue-list" id="issueList">
+          <div class="empty-state"><strong>Chưa có kết quả</strong>Dán văn bản và bắt đầu phân tích.</div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-changes">
+        <div class="change-summary">
+          <div><span>Mức biên tập</span><strong id="changeLevel">Chưa chạy</strong></div>
+          <div><span>Nhóm thay đổi</span><strong id="changeGroups">0</strong></div>
+          <div><span>Số lần sửa</span><strong id="changeTotal">0</strong></div>
+        </div>
+        <div class="change-list" id="changeList">
+          <div class="empty-state"><strong>Chưa có thay đổi tự động</strong>Chọn mức sửa và nhấn “Biên tập sâu”.</div>
+        </div>
+        <div class="author-prompts" id="authorPrompts" hidden>
+          <h3>Phần chỉ người viết mới có thể bổ sung</h3>
+          <ul id="authorPromptList"></ul>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-compare">
+        <div class="compare-grid">
+          <div class="compare-box"><h3>Văn bản gốc</h3><div class="compare-text" id="compareOriginal">Chưa có nội dung.</div></div>
+          <div class="compare-box"><h3>Bản làm việc</h3><div class="compare-text" id="compareEdited">Chưa có nội dung.</div></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-methods">
+        <div class="method-grid" id="methodGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <span>VietDraft Offline 1.1 · Toàn bộ xử lý diễn ra trong trình duyệt</span>
+      <span>Không tải thư viện ngoài · Không gọi API · Không chấm “xác suất AI”</span>
+    </div>
+  </footer>
+
+  <div class="modal-backdrop" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <section class="modal">
+      <div class="modal-head"><h2 id="aboutTitle">Mục đích và giới hạn</h2><button class="icon-btn" id="closeModal" type="button" aria-label="Đóng">×</button></div>
+      <div class="modal-body">
+        <p><strong>VietDraft Offline</strong> hỗ trợ người viết tự biên tập tiếng Việt bằng các quy tắc minh bạch. Ứng dụng không gửi văn bản đi đâu, không dùng mô hình AI và có thể mở trực tiếp bằng tệp <code>index.html</code>.</p>
+        <h3>Công cụ làm được</h3>
+        <ul>
+          <li>Chuẩn hóa Unicode, khoảng trắng, dấu câu và một số lỗi đánh máy an toàn.</li>
+          <li>Biên tập sâu theo quy tắc: giảm câu khuôn mẫu, liên từ lặp, động từ vòng, khẳng định quá mức; tách câu và đoạn quá dài.</li>
+          <li>Phát hiện câu quá dài/ngắn, nhịp câu đều, lặp từ, sáo ngữ, khẳng định tuyệt đối, đoạn văn mất cân đối và nguồn dẫn cần kiểm tra.</li>
+          <li>Ghi nhật ký từng nhóm thay đổi để người dùng kiểm tra, hoàn tác, so sánh và xuất TXT/JSON.</li>
+        </ul>
+        <h3>Công cụ không làm được</h3>
+        <ul>
+          <li>Không xác định chắc chắn văn bản do con người hay AI tạo ra.</li>
+          <li>Không cam kết thay đổi kết quả của Turnitin hoặc bất kỳ bộ dò nào.</li>
+          <li>Không tự tạo dữ kiện, trích dẫn, kinh nghiệm cá nhân hoặc kết luận chuyên môn.</li>
+        </ul>
+      </div>
+      <div class="modal-foot"><button class="btn primary" id="understoodBtn" type="button">Đã hiểu</button></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    const els = {
+      input: $("#inputText"), output: $("#outputText"), issueList: $("#issueList"),
+      fileInput: $("#fileInput"), remember: $("#rememberToggle"), toast: $("#toast"),
+      qualityValue: $("#qualityValue"), qualityBar: $("#qualityBar"), qualityLabel: $("#qualityLabel"),
+      qualityHelp: $("#qualityHelp"), compareOriginal: $("#compareOriginal"), compareEdited: $("#compareEdited"),
+      changeList: $("#changeList"), authorPrompts: $("#authorPrompts"), authorPromptList: $("#authorPromptList")
+    };
+
+    const HIDDEN_CHARS = /[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
+    const WORD_RE = /[A-Za-zÀ-ỹĐđ0-9]+(?:[-’'][A-Za-zÀ-ỹĐđ0-9]+)*/gu;
+    const STOP_WORDS = new Set(("và là của có được trong cho với một các những này đó khi đã sẽ đang từ về để theo như nhưng mà thì do vì nên hoặc cũng rất hơn tại trên dưới giữa qua lại ra vào đến người việc điều không còn chỉ mỗi mọi chúng tôi ta bạn họ nó mình đây ấy nào gì ai bao nhiêu sao".split(" ")));
+    const CONNECTORS = ["hơn nữa", "bên cạnh đó", "ngoài ra", "mặt khác", "do đó", "vì vậy", "tuy nhiên", "đồng thời", "thứ nhất", "thứ hai", "cuối cùng", "nhìn chung", "tóm lại"];
+    const CLICHES = ["trong bối cảnh hiện nay", "không thể phủ nhận rằng", "có thể thấy rằng", "qua đó có thể thấy", "đóng vai trò vô cùng quan trọng", "mang tính cấp thiết", "một cách toàn diện", "một cách hiệu quả", "điều đáng nói là", "như chúng ta đã biết", "trong thời đại ngày nay"];
+    const ABSOLUTES = ["chắc chắn", "hoàn toàn", "tuyệt đối", "không bao giờ", "luôn luôn", "duy nhất", "100%", "không thể sai", "mọi trường hợp"];
+    const SUPERLATIVES = ["tốt nhất", "lớn nhất", "quan trọng nhất", "vượt trội", "tối ưu nhất", "hoàn hảo", "vô cùng quan trọng"];
+    const WEAK_PHRASES = ["thực hiện việc", "tiến hành việc", "có sự", "đưa ra sự", "tạo ra sự", "trong việc", "nhằm mục đích để"];
+    const VAGUE_REFERENCES = ["điều này", "vấn đề này", "khía cạnh này", "hiện tượng này", "những điều trên", "nội dung trên"];
+
+    const METHODS = [
+      ["Unicode và ký tự ẩn", "Chuẩn hóa NFC; phát hiện ký tự zero-width, điều khiển hướng chữ và BOM."],
+      ["Khoảng trắng", "Tìm khoảng trắng kép, khoảng trắng cuối dòng và dòng trống quá mức."],
+      ["Khoảng cách dấu câu", "Phát hiện khoảng trắng sai trước/sau dấu câu thông dụng."],
+      ["Dấu câu lặp", "Nhận diện chuỗi dấu chấm, hỏi, than bị lặp hoặc pha trộn."],
+      ["Ngoặc và dấu nháy", "Kiểm tra sơ bộ các cặp ngoặc, ngoặc vuông và dấu nháy."],
+      ["Lặp từ liền nhau", "Tìm lỗi gõ như “và và”, “các các” mà không dựa vào máy chủ."],
+      ["Câu quá dài", "Đánh dấu câu trên ngưỡng từ để người viết tách ý khi cần."],
+      ["Câu quá ngắn", "Phát hiện chuỗi câu cụt có thể làm mạch văn đứt đoạn."],
+      ["Nhịp câu đồng đều", "Dùng độ lệch chuẩn độ dài câu để phát hiện nhịp đều bất thường, khó đọc."],
+      ["Mở đầu câu lặp", "Thống kê hai từ đầu câu và tìm mô-típ lặp liên tiếp."],
+      ["Từ nội dung lặp", "Tìm từ mang nội dung xuất hiện dày đặc sau khi bỏ hư từ phổ biến."],
+      ["Cụm ba từ lặp", "Phát hiện n-gram ba từ lặp nhiều lần trong cùng văn bản."],
+      ["Liên từ dày", "Đếm các từ chuyển ý để tránh nối đoạn theo công thức."],
+      ["Liên từ thiếu", "Gợi ý kiểm tra quan hệ ý khi nhiều đoạn đứng cạnh nhau nhưng ít dấu nối."],
+      ["Sáo ngữ", "Đánh dấu cụm mở/kết quen thuộc hoặc chung chung để người viết làm rõ."],
+      ["Mức độ khẳng định", "Tìm từ tuyệt đối; yêu cầu đối chiếu mức độ với bằng chứng."],
+      ["So sánh nhất", "Nhắc bổ sung tiêu chí hoặc nguồn khi dùng tuyên bố vượt trội."],
+      ["Cụm động từ yếu", "Tìm cách diễn đạt vòng như “thực hiện việc” để cân nhắc dùng động từ trực tiếp."],
+      ["Tham chiếu mơ hồ", "Đánh dấu “điều này/vấn đề này” khi đối tượng tham chiếu có thể chưa rõ."],
+      ["Câu bị động", "Thống kê “được/bị” ở mật độ cao; không mặc định coi bị động là sai."],
+      ["Đoạn quá dài", "Phát hiện đoạn nhiều từ, có nguy cơ gom nhiều luận điểm."],
+      ["Đoạn quá vụn", "Tìm nhiều đoạn một câu liên tiếp làm vỡ bố cục."],
+      ["Độ dài đoạn đồng đều", "So sánh hệ số biến thiên để gợi ý tổ chức theo luận điểm thay vì khuôn cứng."],
+      ["Mở đoạn lặp", "Tìm đoạn văn bắt đầu bằng cùng một mô-típ."],
+      ["Số liệu cần nguồn", "Đánh dấu câu có phần trăm/số thống kê nhưng thiếu dấu hiệu dẫn nguồn."],
+      ["Trích dẫn cần nguồn", "Tìm lời đặt trong ngoặc kép nhưng thiếu tín hiệu quy chiếu tác giả/nguồn."],
+      ["Viết tắt", "Kiểm tra chữ viết tắt xuất hiện dày mà chưa có diễn giải lần đầu."],
+      ["Tính nhất quán danh sách", "So sánh dấu câu cuối các gạch đầu dòng."],
+      ["Dữ kiện trải nghiệm", "Nhắc xác minh các tuyên bố “đã khảo sát/phỏng vấn/quan sát”; không tự bịa."],
+      ["Thông tin riêng tư", "Cảnh báo email, số điện thoại có thể vô tình nằm trong văn bản xuất bản."],
+    ];
+
+    const state = {
+      issues: [], stats: null, activeFilter: "all", undoStack: [], lastGenerated: "", analyzedText: "",
+      changeLog: [], changeLevel: "", authorPrompts: []
+    };
+
+    function words(text) { return text.match(WORD_RE) || []; }
+
+    function paragraphs(text) {
+      return text.trim() ? text.trim().split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean) : [];
+    }
+
+    function splitSentences(text) {
+      if (!text.trim()) return [];
+      const protectedText = text.replace(/\b(?:PGS\.TS\.|ThS\.|TS\.|GS\.|BS\.|KS\.|TP\.|Q\.|P\.|v\.v\.|v\.d\.|Mr\.|Ms\.|Dr\.)/gi, m => m.replace(/\./g, "∯"));
+      const matches = protectedText.replace(/\n+/g, " ").match(/[^.!?…]+(?:[.!?…]+(?:[”’"')\]]+)?)|[^.!?…]+$/g) || [];
+      return matches.map(s => s.replace(/∯/g, ".").trim()).filter(s => words(s).length > 0);
+    }
+
+    function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    function countPhrase(text, phrase) {
+      const match = text.match(new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(phrase)}(?=$|[^\\p{L}\\p{N}])`, "giu"));
+      return match ? match.length : 0;
+    }
+
+    function excerpt(value, length = 150) {
+      const clean = value.replace(/\s+/g, " ").trim();
+      return clean.length > length ? clean.slice(0, length - 1) + "…" : clean;
+    }
+
+    function safeClean(text) {
+      return text
+        .normalize("NFC")
+        .replace(HIDDEN_CHARS, "")
+        .replace(/\r\n?/g, "\n")
+        .replace(/\u00A0/g, " ")
+        .replace(/[ \t]+$/gm, "")
+        .replace(/[ \t]{2,}/g, " ")
+        .replace(/[ \t]+([,.;:!?…])/g, "$1")
+        .replace(/([;:!?])(?=\p{L})/gu, "$1 ")
+        .replace(/([,])(?=\p{L})/gu, "$1 ")
+        .replace(/\.{4,}/g, "…")
+        .replace(/([!?])\1{1,}/g, "$1")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    function removeDuplicateWords(text) {
+      return text
+        .replace(/(^|[^\p{L}\p{N}])([\p{L}\p{N}]+)(\s+)\2(?=$|[^\p{L}\p{N}])/giu, "$1$2")
+        .replace(/(^|[^\p{L}\p{N}])([\p{L}\p{N}]+)\s+([\p{L}\p{N}]+)\s+\2\s+\3(?=$|[^\p{L}\p{N}])/giu, "$1$2 $3");
+    }
+
+    const EDIT_LEVELS = { light: 1, balanced: 2, deep: 3 };
+    const EDIT_LEVEL_LABELS = { light: "Sửa nhẹ", balanced: "Sửa cân bằng", deep: "Sửa sâu" };
+    const PROTECTED_SEGMENTS = /(```[\s\S]*?```|`[^`\n]+`|“[^”]*”|"[^"\n]*"|https?:\/\/\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,})/g;
+
+    function addChange(ctx, id, title, description, count = 1) {
+      if (!count) return;
+      const current = ctx.logs.get(id);
+      if (current) current.count += count;
+      else ctx.logs.set(id, { id, title, description, count });
+    }
+
+    function replaceEditable(text, regex, replacement) {
+      let count = 0;
+      const parts = text.split(PROTECTED_SEGMENTS);
+      const output = parts.map((part, index) => {
+        if (index % 2 === 1) return part;
+        return part.replace(regex, (...args) => {
+          const next = typeof replacement === "function" ? replacement(...args) : replacement;
+          if (next !== args[0]) count += 1;
+          return next;
+        });
+      }).join("");
+      return { text: output, count };
+    }
+
+    function applyEditRule(ctx, id, title, description, regex, replacement, minimumLevel = "light") {
+      if (EDIT_LEVELS[ctx.level] < EDIT_LEVELS[minimumLevel]) return;
+      const result = replaceEditable(ctx.text, regex, replacement);
+      ctx.text = result.text;
+      addChange(ctx, id, title, description, result.count);
+    }
+
+    function capitalizeSentenceStarts(text) {
+      return replaceEditable(text, /(^|[.!?…]\s+|\n+\s*)(\p{Ll})/gu, (match, lead, letter) => lead + letter.toLocaleUpperCase("vi")).text;
+    }
+
+    function reduceRepeatedConnectors(text) {
+      let count = 0;
+      const connectorPattern = new RegExp(`^(${CONNECTORS.map(escapeRegExp).join("|")})[,;:]?\\s+`, "iu");
+      const blocks = text.split(/(\n\s*\n)/);
+      const output = blocks.map((block, blockIndex) => {
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        const seen = new Map();
+        const sentences = splitSentences(block);
+        if (sentences.length < 2) return block;
+        let blockChanged = false;
+        const edited = sentences.map(sentence => {
+          const hit = sentence.match(connectorPattern);
+          if (!hit) return sentence;
+          const key = hit[1].toLocaleLowerCase("vi");
+          const used = seen.get(key) || 0;
+          seen.set(key, used + 1);
+          if (used === 0) return sentence;
+          count += 1;
+          blockChanged = true;
+          return capitalizeSentenceStarts(sentence.replace(connectorPattern, ""));
+        });
+        return blockChanged ? edited.join(" ") : block;
+      }).join("");
+      return { text: output, count };
+    }
+
+    function varyRepeatedSentenceStarts(text) {
+      let count = 0;
+      const blocks = text.split(/(\n\s*\n)/);
+      const output = blocks.map((block, blockIndex) => {
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        const sentences = splitSentences(block);
+        if (sentences.length < 2) return block;
+        let blockChanged = false;
+        const edited = sentences.map((sentence, index) => {
+          if (index === 0) return sentence;
+          const previousFirst = words(sentences[index - 1])[0]?.toLocaleLowerCase("vi");
+          const match = sentence.match(/^([\p{L}][\p{L}\s-]{0,45}?)\s+giúp\s+(.+)$/u);
+          if (!match) return sentence;
+          const subjectFirst = words(match[1])[0]?.toLocaleLowerCase("vi");
+          if (!previousFirst || previousFirst !== subjectFirst) return sentence;
+          const subject = match[1].charAt(0).toLocaleLowerCase("vi") + match[1].slice(1);
+          count += 1;
+          blockChanged = true;
+          return `Nhờ ${subject}, ${match[2]}`;
+        });
+        return blockChanged ? edited.join(" ") : block;
+      }).join("");
+      return { text: output, count };
+    }
+
+    function splitLongSentences(text, threshold) {
+      let count = 0;
+      const blocks = text.split(/(\n\s*\n)/);
+      const output = blocks.map((block, blockIndex) => {
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        const sentences = splitSentences(block);
+        let blockChanged = false;
+        const edited = sentences.map(sentence => {
+          if (words(sentence).length <= threshold) return sentence;
+          const candidates = [...sentence.matchAll(/(?:,\s+|\s+)(nhưng|tuy nhiên|vì vậy|do đó|đồng thời|mặt khác|ngoài ra|bên cạnh đó|trong khi)\s+/giu)];
+          if (candidates.length) {
+            const middle = sentence.length / 2;
+            const chosen = candidates.sort((a, b) => Math.abs(a.index - middle) - Math.abs(b.index - middle))[0];
+            const connector = chosen[1].toLocaleLowerCase("vi");
+            const starters = {
+              "nhưng": "Tuy nhiên, ", "tuy nhiên": "Tuy nhiên, ", "vì vậy": "Vì vậy, ", "do đó": "Vì vậy, ",
+              "đồng thời": "Đồng thời, ", "mặt khác": "Mặt khác, ", "ngoài ra": "Ngoài ra, ",
+              "bên cạnh đó": "Ngoài ra, ", "trong khi": "Trong khi "
+            };
+            const left = sentence.slice(0, chosen.index).trim().replace(/[,:;]+$/, "");
+            const rightStart = chosen.index + chosen[0].length;
+            const right = sentence.slice(rightStart).trim();
+            if (words(left).length >= 6 && words(right).length >= 5) {
+              count += 1;
+              blockChanged = true;
+              return `${left}. ${starters[connector] || ""}${right}`;
+            }
+          }
+          const semicolons = [...sentence.matchAll(/;\s+/g)];
+          if (semicolons.length) {
+            const middle = sentence.length / 2;
+            const chosen = semicolons.sort((a, b) => Math.abs(a.index - middle) - Math.abs(b.index - middle))[0];
+            const left = sentence.slice(0, chosen.index).trim();
+            const right = sentence.slice(chosen.index + chosen[0].length).trim();
+            if (words(left).length >= 6 && words(right).length >= 5) {
+              count += 1;
+              blockChanged = true;
+              return `${left}. ${capitalizeSentenceStarts(right)}`;
+            }
+          }
+          return sentence;
+        });
+        return blockChanged ? edited.join(" ") : block;
+      }).join("");
+      return { text: output, count };
+    }
+
+    function splitLongParagraphs(text, threshold) {
+      let count = 0;
+      const blocks = text.split(/(\n\s*\n)/);
+      const output = blocks.map((block, blockIndex) => {
+        if (blockIndex % 2 === 1 || words(block).length <= threshold || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        const sentences = splitSentences(block);
+        if (sentences.length < 4) return block;
+        const total = words(block).length;
+        let running = 0, cut = -1;
+        for (let i = 0; i < sentences.length - 1; i++) {
+          running += words(sentences[i]).length;
+          if (running >= total / 2) { cut = i + 1; break; }
+        }
+        if (cut < 1 || cut >= sentences.length) return block;
+        count += 1;
+        return `${sentences.slice(0, cut).join(" ")}\n\n${sentences.slice(cut).join(" ")}`;
+      }).join("");
+      return { text: output, count };
+    }
+
+    function buildAuthorPrompts(text) {
+      const prompts = [];
+      if (/\b\d+(?:[.,]\d+)?\s*%|\b\d{3,}\b/.test(text)) prompts.push("Kiểm tra nguồn, thời điểm, cỡ mẫu và phạm vi của mọi số liệu trước khi giữ lại.");
+      if (phraseHits(text.toLocaleLowerCase("vi"), ABSOLUTES).length) prompts.push("Đọc lại các khẳng định mạnh: bằng chứng thực tế có hỗ trợ đúng phạm vi đã nêu không?");
+      if (phraseHits(text.toLocaleLowerCase("vi"), CLICHES).length) prompts.push("Nếu cần minh họa, chỉ dùng ví dụ thật từ công việc, lớp học hoặc dữ liệu mà người viết trực tiếp biết.");
+      if (/(tôi|chúng tôi|nhóm nghiên cứu)\s+đã\s+(khảo sát|phỏng vấn|quan sát|thực nghiệm|điều tra)/i.test(text)) prompts.push("Xác minh tuyên bố khảo sát/phỏng vấn/quan sát bằng hồ sơ thật; nếu không có, phải bỏ tuyên bố đó.");
+      return prompts.slice(0, 4);
+    }
+
+    function deepEdit(source, level = "deep") {
+      const ctx = { text: source, level, logs: new Map() };
+      const technical = removeDuplicateWords(safeClean(ctx.text));
+      if (technical !== ctx.text) addChange(ctx, "technical", "Dọn lỗi kỹ thuật", "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", 1);
+      ctx.text = technical;
+
+      applyEditRule(ctx, "opening", "Bỏ mở đầu khuôn mẫu", "Đưa thẳng nội dung chính lên đầu câu.", /(?:trong bối cảnh hiện nay|như chúng ta đã biết),?\s*/giu, "", "light");
+      applyEditRule(ctx, "opening", "Bỏ lời dẫn thừa", "Giảm các cụm báo trước nhận định nhưng không thêm thông tin.", /(?:có thể thấy rằng|không thể phủ nhận rằng|điều đáng nói là)\s*/giu, "", "light");
+      applyEditRule(ctx, "cliche", "Giảm sáo ngữ", "Thay cụm chung chung bằng cách diễn đạt gọn và trực tiếp.", /đóng vai trò vô cùng quan trọng/giu, "có vai trò quan trọng", "light");
+      applyEditRule(ctx, "cliche", "Giảm sáo ngữ", "Thay cụm chung chung bằng cách diễn đạt gọn và trực tiếp.", /vô cùng quan trọng/giu, "quan trọng", "light");
+      applyEditRule(ctx, "cliche", "Giảm sáo ngữ", "Thay cụm chung chung bằng cách diễn đạt gọn và trực tiếp.", /một cách toàn diện/giu, "trên nhiều mặt", "light");
+      applyEditRule(ctx, "cliche", "Giảm sáo ngữ", "Thay cụm chung chung bằng cách diễn đạt gọn và trực tiếp.", /một cách hiệu quả/giu, "hiệu quả", "light");
+      applyEditRule(ctx, "conclusion", "Gọn câu kết", "Bỏ nhãn kết luận máy móc nhưng giữ nguyên ý chính.", /(?:tóm lại|nhìn chung|có thể kết luận rằng),?\s*/giu, "", "balanced");
+
+      applyEditRule(ctx, "weak-verbs", "Dùng động từ trực tiếp", "Giảm cách diễn đạt vòng để câu gọn hơn.", /(?:thực hiện việc|tiến hành việc)\s+/giu, "", "balanced");
+      applyEditRule(ctx, "weak-verbs", "Dùng động từ trực tiếp", "Giảm cách diễn đạt vòng để câu gọn hơn.", /nhằm mục đích để/giu, "để", "balanced");
+      applyEditRule(ctx, "wordy", "Gọn cụm từ dài", "Thay cụm nhiều danh từ bằng diễn đạt trực tiếp.", /tạo ra sự thuận tiện/giu, "giúp công việc thuận tiện hơn", "balanced");
+      applyEditRule(ctx, "wordy", "Gọn cụm từ dài", "Thay cụm nhiều danh từ bằng diễn đạt trực tiếp.", /có (tác động|ảnh hưởng) đến/giu, (match, noun) => `${noun.toLocaleLowerCase("vi")} đến`, "balanced");
+
+      if (EDIT_LEVELS[level] >= EDIT_LEVELS.balanced) {
+        const connectors = reduceRepeatedConnectors(ctx.text);
+        ctx.text = connectors.text;
+        addChange(ctx, "connectors", "Giảm liên từ lặp", "Giữ từ nối đầu tiên và bỏ các lần lặp theo khuôn trong cùng đoạn.", connectors.count);
+      }
+      if (level === "deep") {
+        const variedStarts = varyRepeatedSentenceStarts(ctx.text);
+        ctx.text = variedStarts.text;
+        addChange(ctx, "sentence-starts", "Đổi nhịp mở câu", "Chuyển câu lặp cùng chủ thể sang cấu trúc nguyên nhân khi quan hệ “giúp” đã có sẵn.", variedStarts.count);
+      }
+
+      applyEditRule(ctx, "certainty", "Giảm khẳng định tuyệt đối", "Chuyển một số nhận định sang mức phù hợp hơn khi chưa có đủ bằng chứng.", /hoàn toàn\s+(?=cải thiện|giúp|đáp ứng|thay đổi|loại bỏ|giải quyết|đảm bảo)/giu, "có thể ", "deep");
+      applyEditRule(ctx, "certainty", "Giảm khẳng định tuyệt đối", "Chuyển một số nhận định sang mức phù hợp hơn khi chưa có đủ bằng chứng.", /chắc chắn là/giu, "có thể là", "deep");
+      applyEditRule(ctx, "certainty", "Giảm khẳng định tuyệt đối", "Chuyển một số nhận định sang mức phù hợp hơn khi chưa có đủ bằng chứng.", /không thể thiếu/giu, "có vai trò đáng kể", "deep");
+      applyEditRule(ctx, "scope", "Thu hẹp phạm vi khái quát", "Tránh mở rộng kết luận tới toàn bộ đối tượng khi văn bản chưa có bằng chứng tương ứng.", /mọi học sinh/giu, "nhiều học sinh", "deep");
+      applyEditRule(ctx, "scope", "Thu hẹp phạm vi khái quát", "Tránh mở rộng kết luận tới toàn bộ đối tượng khi văn bản chưa có bằng chứng tương ứng.", /mọi trường hợp/giu, "nhiều trường hợp", "deep");
+      applyEditRule(ctx, "comparison", "Giảm so sánh thiếu tiêu chí", "Thay so sánh nhất bằng nhận định không vượt quá bằng chứng hiện có.", /(?:tốt nhất|tối ưu nhất|hoàn hảo)/giu, "phù hợp", "deep");
+
+      if (EDIT_LEVELS[level] >= EDIT_LEVELS.balanced) {
+        const sentenceResult = splitLongSentences(ctx.text, level === "deep" ? 22 : 34);
+        ctx.text = sentenceResult.text;
+        addChange(ctx, "sentences", "Tách câu dài theo quan hệ ý", "Tách tại ranh giới đối chiếu, hệ quả hoặc bổ sung khi hai vế đều đủ ý.", sentenceResult.count);
+      }
+      if (level === "deep") {
+        const paragraphResult = splitLongParagraphs(ctx.text, 145);
+        ctx.text = paragraphResult.text;
+        addChange(ctx, "paragraphs", "Chia đoạn quá dài", "Tách đoạn gần ranh giới giữa hai cụm luận điểm, không cắt giữa câu.", paragraphResult.count);
+      }
+
+      const finalized = capitalizeSentenceStarts(safeClean(ctx.text));
+      if (finalized !== ctx.text) addChange(ctx, "finish", "Hoàn thiện câu và dấu", "Chuẩn hóa chữ đầu câu và khoảng cách sau khi biên tập.", 1);
+      ctx.text = finalized;
+      return { text: ctx.text, logs: [...ctx.logs.values()], prompts: buildAuthorPrompts(source), level };
+    }
+
+    function computeStats(text) {
+      const ws = words(text);
+      const ss = splitSentences(text);
+      const ps = paragraphs(text);
+      const normalized = ws.map(w => w.toLocaleLowerCase("vi"));
+      const unique = new Set(normalized);
+      return {
+        words: ws.length,
+        chars: text.length,
+        sentences: ss.length,
+        paragraphs: ps.length,
+        average: ss.length ? ws.length / ss.length : 0,
+        diversity: ws.length ? unique.size / ws.length : 0,
+        readingMinutes: ws.length ? Math.max(1, Math.ceil(ws.length / 220)) : 0,
+        sentenceList: ss,
+        paragraphList: ps
+      };
+    }
+
+    function addIssue(list, id, severity, category, title, description, count = 1, samples = []) {
+      list.push({ id, severity, category, title, description, count, samples: samples.filter(Boolean).slice(0, 3) });
+    }
+
+    function phraseHits(text, phrases) {
+      const hits = [];
+      for (const phrase of phrases) {
+        const count = countPhrase(text, phrase);
+        if (count) hits.push({ phrase, count });
+      }
+      return hits;
+    }
+
+    function analyze(text) {
+      const issues = [];
+      const stats = computeStats(text);
+      const lower = text.toLocaleLowerCase("vi");
+      const ss = stats.sentenceList;
+      const ps = stats.paragraphList;
+
+      const hidden = text.match(HIDDEN_CHARS) || [];
+      if (hidden.length) addIssue(issues, "hidden", "error", "Kỹ thuật", "Có ký tự ẩn hoặc điều khiển", "Nên loại bỏ vì chúng có thể gây lỗi hiển thị, tìm kiếm hoặc sao chép. Nút “Dọn định dạng an toàn” xử lý mục này.", hidden.length);
+
+      const badSpaces = (text.match(/[ \t]{2,}|[ \t]+$/gm) || []).length;
+      if (badSpaces) addIssue(issues, "spaces", "error", "Kỹ thuật", "Khoảng trắng chưa nhất quán", "Có khoảng trắng kép hoặc khoảng trắng thừa cuối dòng.", badSpaces);
+
+      const punctuationSpacing = (text.match(/[ \t]+[,.;:!?…]|[;:!?](?=\p{L})|,(?=\p{L})/gu) || []).length;
+      if (punctuationSpacing) addIssue(issues, "punctuation-space", "error", "Kỹ thuật", "Khoảng cách quanh dấu câu", "Một số dấu câu dính vào từ sau hoặc có khoảng trắng ở phía trước.", punctuationSpacing);
+
+      const repeatedPunctuation = (text.match(/\.{4,}|([!?])\1{1,}|[!?]{2,}/g) || []).length;
+      if (repeatedPunctuation) addIssue(issues, "punctuation-repeat", "warning", "Dấu câu", "Dấu câu bị lặp", "Chuỗi dấu câu dài thường làm giảm tính trang trọng và có thể là lỗi gõ.", repeatedPunctuation);
+
+      const pairProblems = [];
+      const pairDefs = [["(", ")", "ngoặc tròn"], ["[", "]", "ngoặc vuông"], ["{", "}", "ngoặc nhọn"], ["“", "”", "nháy cong"]];
+      for (const [open, close, label] of pairDefs) {
+        const a = text.split(open).length - 1;
+        const b = text.split(close).length - 1;
+        if (a !== b) pairProblems.push(`${label}: ${a}/${b}`);
+      }
+      if ((text.match(/"/g) || []).length % 2 !== 0) pairProblems.push("nháy kép thẳng: số lượng lẻ");
+      if (pairProblems.length) addIssue(issues, "pairs", "error", "Kỹ thuật", "Ngoặc hoặc dấu nháy có thể chưa khép", "Kiểm tra lại các cặp ký hiệu trước khi xuất bản.", pairProblems.length, pairProblems);
+
+      const duplicateSamples = [];
+      const duplicateRe = /(^|[^\p{L}\p{N}])([\p{L}\p{N}]+)(\s+)\2(?=$|[^\p{L}\p{N}])/giu;
+      let duplicateMatch;
+      while ((duplicateMatch = duplicateRe.exec(text)) && duplicateSamples.length < 5) duplicateSamples.push(`${duplicateMatch[2]} ${duplicateMatch[2]}`);
+      const duplicateBigramRe = /(^|[^\p{L}\p{N}])([\p{L}\p{N}]+)\s+([\p{L}\p{N}]+)\s+\2\s+\3(?=$|[^\p{L}\p{N}])/giu;
+      while ((duplicateMatch = duplicateBigramRe.exec(text)) && duplicateSamples.length < 5) duplicateSamples.push(`${duplicateMatch[2]} ${duplicateMatch[3]} ${duplicateMatch[2]} ${duplicateMatch[3]}`);
+      if (duplicateSamples.length) addIssue(issues, "duplicate-word", "error", "Từ ngữ", "Lặp từ liền nhau", "Đây thường là lỗi gõ và có thể sửa tự động an toàn.", duplicateSamples.length, duplicateSamples);
+
+      const longSentences = ss.filter(s => words(s).length > 32);
+      if (longSentences.length) addIssue(issues, "long-sentence", "warning", "Câu", "Câu dài trên 32 từ", "Mỗi câu nên có một trọng tâm rõ. Có thể tách ở ranh giới nguyên nhân, kết quả, đối chiếu hoặc ví dụ.", longSentences.length, longSentences.map(excerpt));
+
+      const veryLong = ss.filter(s => words(s).length > 55);
+      if (veryLong.length) addIssue(issues, "very-long-sentence", "error", "Câu", "Câu đặc biệt dài trên 55 từ", "Nguy cơ nhập nhiều luận điểm vào một câu. Hãy kiểm tra chủ ngữ, vị ngữ và các mệnh đề phụ.", veryLong.length, veryLong.map(excerpt));
+
+      const shortSentences = ss.filter(s => {
+        const n = words(s).length;
+        return n > 0 && n <= 4 && /[.!?…]$/.test(s.trim());
+      });
+      if (shortSentences.length >= 3) addIssue(issues, "short-sentence", "info", "Câu", "Nhiều câu rất ngắn", "Câu ngắn có tác dụng nhấn mạnh, nhưng dùng liên tiếp có thể làm mạch văn vụn.", shortSentences.length, shortSentences.map(excerpt));
+
+      const lengths = ss.map(s => words(s).length);
+      if (lengths.length >= 6) {
+        const mean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+        const sd = Math.sqrt(lengths.reduce((sum, n) => sum + Math.pow(n - mean, 2), 0) / lengths.length);
+        if (sd < 4.2) addIssue(issues, "sentence-rhythm", "info", "Câu", "Nhịp câu khá đồng đều", "Có thể xen kẽ có chủ đích câu ngắn để nhấn ý và câu dài vừa phải để giải thích. Không cần thay đổi nếu thể loại yêu cầu nhịp ổn định.", 1, [`Độ dài trung bình ${mean.toFixed(1)} từ; độ lệch chuẩn ${sd.toFixed(1)}.`]);
+      }
+
+      const openerMap = new Map();
+      for (const s of ss) {
+        const opener = words(s).slice(0, 2).join(" ").toLocaleLowerCase("vi");
+        if (words(opener).length === 2) openerMap.set(opener, (openerMap.get(opener) || 0) + 1);
+      }
+      const repeatedOpeners = [...openerMap.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]);
+      if (repeatedOpeners.length) addIssue(issues, "sentence-opener", "warning", "Câu", "Mở đầu câu bị lặp", "Đổi cấu trúc chỉ khi việc lặp không nhằm nhấn mạnh hoặc tạo phép song hành.", repeatedOpeners.reduce((a, [, n]) => a + n, 0), repeatedOpeners.map(([x, n]) => `“${x}…”: ${n} lần`));
+
+      const contentFreq = new Map();
+      const normalizedWords = words(lower).filter(w => w.length >= 4 && !STOP_WORDS.has(w));
+      for (const w of normalizedWords) contentFreq.set(w, (contentFreq.get(w) || 0) + 1);
+      const denseWords = [...contentFreq.entries()].filter(([, n]) => n >= 5 && n / Math.max(normalizedWords.length, 1) >= .035).sort((a, b) => b[1] - a[1]);
+      if (denseWords.length) addIssue(issues, "word-repeat", "warning", "Từ ngữ", "Một số từ nội dung lặp dày", "Không thay từ chỉ để tạo khác biệt. Trước hết kiểm tra xem mỗi lần lặp có cần thiết cho độ chính xác thuật ngữ hay không.", denseWords.length, denseWords.map(([w, n]) => `“${w}”: ${n} lần`));
+
+      const trigrams = new Map();
+      const simpleWords = words(lower).map(w => w.toLocaleLowerCase("vi"));
+      for (let i = 0; i <= simpleWords.length - 3; i++) {
+        const gram = simpleWords.slice(i, i + 3).join(" ");
+        if (simpleWords.slice(i, i + 3).filter(w => !STOP_WORDS.has(w)).length >= 1) trigrams.set(gram, (trigrams.get(gram) || 0) + 1);
+      }
+      const repeatedTrigrams = [...trigrams.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      if (repeatedTrigrams.length) addIssue(issues, "phrase-repeat", "info", "Từ ngữ", "Cụm ba từ lặp nhiều lần", "Kiểm tra xem cụm lặp là thuật ngữ bắt buộc, phép liên kết hay diễn đạt dư.", repeatedTrigrams.length, repeatedTrigrams.map(([g, n]) => `“${g}”: ${n} lần`));
+
+      const connectorHits = phraseHits(lower, CONNECTORS);
+      const connectorTotal = connectorHits.reduce((sum, x) => sum + x.count, 0);
+      if (stats.sentences >= 5 && connectorTotal / stats.sentences >= .4) addIssue(issues, "connectors-high", "warning", "Liên kết", "Từ chuyển ý xuất hiện dày", "Liên kết ý nên đến từ quan hệ logic thật, không cần mở mọi câu bằng một từ nối.", connectorTotal, connectorHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+      if (stats.paragraphs >= 4 && connectorTotal === 0) addIssue(issues, "connectors-low", "info", "Liên kết", "Ít tín hiệu chuyển ý", "Đọc lại quan hệ giữa các đoạn: bổ sung từ nối khi cần làm rõ đối chiếu, nguyên nhân, hệ quả hoặc tiếp nối.", 1);
+
+      const clichéHits = phraseHits(lower, CLICHES);
+      if (clichéHits.length) addIssue(issues, "cliches", "warning", "Từ ngữ", "Cụm chung chung hoặc sáo ngữ", "Hãy thay bằng thông tin cụ thể: ai, việc gì, ở đâu, khi nào, bằng chứng nào. Không xóa máy móc nếu cụm từ có chức năng thật.", clichéHits.reduce((a, x) => a + x.count, 0), clichéHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+
+      const absoluteHits = phraseHits(lower, ABSOLUTES);
+      if (absoluteHits.length) addIssue(issues, "absolutes", "warning", "Lập luận", "Mức khẳng định cao", "Đối chiếu với phạm vi bằng chứng. Nếu dữ liệu chỉ hỗ trợ xu hướng, hãy nêu rõ điều kiện, xác suất hoặc giới hạn.", absoluteHits.reduce((a, x) => a + x.count, 0), absoluteHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+
+      const superHits = phraseHits(lower, SUPERLATIVES);
+      if (superHits.length) addIssue(issues, "superlatives", "warning", "Lập luận", "Có tuyên bố so sánh nhất/vượt trội", "Nêu tiêu chí so sánh, phạm vi và nguồn; nếu không có dữ liệu, chọn mức diễn đạt phù hợp hơn.", superHits.reduce((a, x) => a + x.count, 0), superHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+
+      const weakHits = phraseHits(lower, WEAK_PHRASES);
+      if (weakHits.length) addIssue(issues, "weak-verbs", "info", "Từ ngữ", "Cụm động từ vòng", "Thử dùng động từ trực tiếp để câu gọn hơn, nhưng giữ nguyên nghĩa chuyên môn.", weakHits.reduce((a, x) => a + x.count, 0), weakHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+
+      const vagueHits = phraseHits(lower, VAGUE_REFERENCES);
+      if (vagueHits.length >= 2) addIssue(issues, "vague-reference", "info", "Mạch ý", "Tham chiếu có thể mơ hồ", "Với mỗi “điều này/vấn đề này”, kiểm tra xem người đọc có xác định ngay đối tượng được nói tới không.", vagueHits.reduce((a, x) => a + x.count, 0), vagueHits.map(x => `“${x.phrase}”: ${x.count} lần`));
+
+      const passiveCount = (lower.match(/(^|[^\p{L}])(được|bị)(?=\s)/gu) || []).length;
+      if (stats.words >= 120 && passiveCount / stats.words > .035) addIssue(issues, "passive", "info", "Câu", "Mật độ cấu trúc “được/bị” khá cao", "Bị động không sai. Chỉ đổi sang chủ động khi tác nhân quan trọng và đã biết.", passiveCount);
+
+      const longParagraphs = ps.filter(p => words(p).length > 170);
+      if (longParagraphs.length) addIssue(issues, "long-paragraph", "warning", "Đoạn", "Đoạn văn dài trên 170 từ", "Kiểm tra xem đoạn có nhiều hơn một luận điểm chính hay không. Tách theo ý, không tách chỉ để làm ngắn.", longParagraphs.length, longParagraphs.map(excerpt));
+
+      let singleSentenceRuns = 0, currentRun = 0;
+      for (const p of ps) {
+        if (splitSentences(p).length === 1 && words(p).length < 45) currentRun += 1;
+        else currentRun = 0;
+        singleSentenceRuns = Math.max(singleSentenceRuns, currentRun);
+      }
+      if (singleSentenceRuns >= 3) addIssue(issues, "fragmented-paragraphs", "info", "Đoạn", "Nhiều đoạn một câu liên tiếp", "Cân nhắc gộp các đoạn cùng một luận điểm; giữ riêng nếu mỗi đoạn có vai trò nhấn mạnh rõ.", singleSentenceRuns);
+
+      if (ps.length >= 5) {
+        const paragraphLengths = ps.map(p => words(p).length);
+        const pMean = paragraphLengths.reduce((a, b) => a + b, 0) / paragraphLengths.length;
+        const pSd = Math.sqrt(paragraphLengths.reduce((sum, n) => sum + Math.pow(n - pMean, 2), 0) / paragraphLengths.length);
+        if (pMean > 15 && pSd / pMean < .16) addIssue(issues, "paragraph-uniform", "info", "Đoạn", "Các đoạn có độ dài khá đồng đều", "Bố cục tốt dựa trên nhiệm vụ của từng đoạn. Không cần cố làm mọi đoạn dài bằng nhau.", 1, [`Trung bình ${pMean.toFixed(0)} từ/đoạn; hệ số biến thiên ${(pSd / pMean * 100).toFixed(0)}%.`]);
+      }
+
+      const pOpeners = new Map();
+      for (const p of ps) {
+        const key = words(p).slice(0, 2).join(" ").toLocaleLowerCase("vi");
+        if (words(key).length === 2) pOpeners.set(key, (pOpeners.get(key) || 0) + 1);
+      }
+      const duplicateParagraphOpeners = [...pOpeners.entries()].filter(([, n]) => n >= 2 && ps.length >= 4);
+      if (duplicateParagraphOpeners.length) addIssue(issues, "paragraph-opener", "info", "Đoạn", "Mở đầu đoạn bị lặp", "Kiểm tra vai trò từng đoạn và dùng câu chủ đề phù hợp với luận điểm, không đổi chỉ để khác bề mặt.", duplicateParagraphOpeners.length, duplicateParagraphOpeners.map(([x, n]) => `“${x}…”: ${n} đoạn`));
+
+      const statisticSentences = ss.filter(s => /\b\d+(?:[.,]\d+)?\s*%|\b\d{3,}\b/.test(s) && !/(\[[0-9]+\]|\([^)]*\d{4}[^)]*\)|https?:\/\/|doi\s*:|nguồn\s*:\s*\S+|theo\s+[^,.]{2,45}\(\s*\d{4}\s*\))/i.test(s));
+      if (statisticSentences.length) addIssue(issues, "statistics-source", "warning", "Nguồn dẫn", "Số liệu có thể thiếu nguồn hoặc ngữ cảnh", "Xác minh số liệu, đơn vị, thời điểm, phạm vi mẫu và dẫn nguồn phù hợp.", statisticSentences.length, statisticSentences.map(excerpt));
+
+      const quoteSentences = ss.filter(s => /[“"]\s*[^”"]{12,}[”"]/.test(s) && !/(theo|cho rằng|nhận định|viết rằng|nguồn|\([^)]*\d{4}[^)]*\)|\[[0-9]+\])/i.test(s));
+      if (quoteSentences.length) addIssue(issues, "quote-source", "warning", "Nguồn dẫn", "Trích dẫn có thể thiếu quy chiếu", "Nêu tác giả/nguồn, năm và vị trí theo chuẩn trích dẫn đang dùng; kiểm tra lại nguyên văn.", quoteSentences.length, quoteSentences.map(excerpt));
+
+      const abbreviations = text.match(/\b[A-ZĐ]{2,7}\b/g) || [];
+      const abbreviationFreq = new Map();
+      for (const a of abbreviations) abbreviationFreq.set(a, (abbreviationFreq.get(a) || 0) + 1);
+      const unclearAbbreviations = [...abbreviationFreq.entries()].filter(([abbr]) => !new RegExp(`[^.]{3,50}\\(${escapeRegExp(abbr)}\\)`).test(text));
+      if (unclearAbbreviations.length >= 2) addIssue(issues, "abbreviations", "info", "Thuật ngữ", "Nhiều chữ viết tắt chưa thấy diễn giải", "Ở lần xuất hiện đầu, viết đầy đủ rồi đặt chữ viết tắt trong ngoặc nếu độc giả có thể chưa quen.", unclearAbbreviations.length, unclearAbbreviations.map(([a, n]) => `${a}: ${n} lần`));
+
+      const bulletLines = text.split("\n").filter(line => /^\s*[-•*+]\s+/.test(line));
+      if (bulletLines.length >= 3) {
+        const endings = new Set(bulletLines.map(line => /[.;:!?]$/.test(line.trim()) ? line.trim().slice(-1) : "không dấu"));
+        if (endings.size > 1) addIssue(issues, "bullet-consistency", "info", "Trình bày", "Dấu câu cuối gạch đầu dòng chưa nhất quán", "Chọn một quy ước phù hợp: mục ngắn thường không dấu; câu hoàn chỉnh thường có dấu chấm.", bulletLines.length, [...endings].map(x => `Kiểu kết: ${x}`));
+      }
+
+      const experienceClaims = ss.filter(s => /(tôi|chúng tôi|nhóm nghiên cứu)\s+đã\s+(khảo sát|phỏng vấn|quan sát|thực nghiệm|điều tra|ghi nhận|thu thập)/i.test(s));
+      if (experienceClaims.length) addIssue(issues, "experience-verify", "warning", "Liêm chính", "Có tuyên bố trải nghiệm/nghiên cứu cần xác minh", "Chỉ giữ khi hoạt động thật sự đã diễn ra và có hồ sơ/phương pháp hỗ trợ. Không thêm trải nghiệm giả để làm văn bản có vẻ “người” hơn.", experienceClaims.length, experienceClaims.map(excerpt));
+
+      const privateItems = [];
+      if (/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/.test(text)) privateItems.push("địa chỉ email");
+      if (/(?:\+?84|0)(?:\s|[.-])?(?:\d(?:\s|[.-])?){8,10}\b/.test(text)) privateItems.push("số điện thoại có thể nhận diện");
+      if (privateItems.length) addIssue(issues, "privacy", "warning", "Riêng tư", "Có thông tin liên hệ trong văn bản", "Kiểm tra quyền công bố và ẩn dữ liệu cá nhân nếu bản sẽ chia sẻ công khai.", privateItems.length, privateItems);
+
+      return { issues, stats };
+    }
+
+    function qualityScore(issues, stats) {
+      if (!stats.words) return null;
+      const weighted = issues.reduce((sum, issue) => {
+        const base = issue.severity === "error" ? 6 : issue.severity === "warning" ? 3.5 : 1.4;
+        const scaled = Math.min(3, 1 + Math.log2(Math.max(1, issue.count)) * .35);
+        return sum + base * scaled;
+      }, 0);
+      const lengthFactor = Math.max(1, Math.sqrt(stats.words / 180));
+      return Math.round(Math.max(0, Math.min(100, 100 - weighted / lengthFactor)));
+    }
+
+    function renderStats(stats, score) {
+      $("#statWords").textContent = stats.words.toLocaleString("vi-VN");
+      $("#statSentences").textContent = stats.sentences.toLocaleString("vi-VN");
+      $("#statParagraphs").textContent = stats.paragraphs.toLocaleString("vi-VN");
+      $("#statAverage").textContent = stats.average ? stats.average.toFixed(1) : "0";
+      $("#statDiversity").textContent = `${Math.round(stats.diversity * 100)}%`;
+      $("#statQuality").textContent = score === null ? "—" : score;
+      els.qualityValue.textContent = score === null ? "—" : score;
+      els.qualityBar.style.width = `${score || 0}%`;
+      if (score === null) {
+        els.qualityLabel.textContent = "Chưa phân tích";
+      } else if (score >= 88) {
+        els.qualityLabel.textContent = "Rõ ràng, còn ít điểm cần rà soát";
+      } else if (score >= 72) {
+        els.qualityLabel.textContent = "Khá rõ, nên biên tập thêm";
+      } else if (score >= 52) {
+        els.qualityLabel.textContent = "Cần rà soát có trọng tâm";
+      } else {
+        els.qualityLabel.textContent = "Cần biên tập kỹ";
+      }
+      els.qualityHelp.textContent = score === null
+        ? "Dán văn bản rồi chọn “Phân tích 30 tiêu chí”. Điểm này phản ánh độ rõ ràng theo quy tắc, không phải xác suất AI."
+        : "Điểm quy tắc về độ rõ ràng và trình bày; không đánh giá tác giả, tính đúng của kiến thức hay xác suất AI.";
+    }
+
+    function renderIssues() {
+      const filtered = state.activeFilter === "all" ? state.issues : state.issues.filter(i => i.severity === state.activeFilter);
+      if (!filtered.length) {
+        els.issueList.innerHTML = `<div class="empty-state"><strong>${state.issues.length ? "Không có mục trong bộ lọc này" : "Không phát hiện vấn đề theo 30 quy tắc"}</strong>Vẫn cần người viết kiểm tra sự thật, lập luận, nguồn và yêu cầu của thể loại.</div>`;
+        return;
+      }
+      els.issueList.innerHTML = "";
+      for (const issue of filtered) {
+        const card = document.createElement("article");
+        card.className = "issue-card";
+        card.dataset.severity = issue.severity;
+        const dot = document.createElement("span");
+        dot.className = "issue-dot";
+        dot.setAttribute("aria-hidden", "true");
+        const content = document.createElement("div");
+        const title = document.createElement("h4");
+        title.textContent = issue.title;
+        const desc = document.createElement("p");
+        desc.textContent = issue.description;
+        content.append(title, desc);
+        if (issue.samples.length) {
+          const sample = document.createElement("div");
+          sample.className = "issue-sample";
+          sample.textContent = issue.samples.join(" · ");
+          content.append(sample);
+        }
+        const meta = document.createElement("span");
+        meta.className = "issue-meta";
+        meta.textContent = `${issue.category} · ${issue.count}`;
+        card.append(dot, content, meta);
+        els.issueList.append(card);
+      }
+    }
+
+    function updateSummary() {
+      const counts = { error: 0, warning: 0, info: 0 };
+      for (const issue of state.issues) counts[issue.severity] += 1;
+      $("#errorCount").textContent = counts.error;
+      $("#warningCount").textContent = counts.warning;
+      $("#infoCount").textContent = counts.info;
+      $("#issueBadge").textContent = state.issues.length;
+    }
+
+    function renderChangeLog() {
+      const total = state.changeLog.reduce((sum, item) => sum + item.count, 0);
+      $("#changeLevel").textContent = state.changeLevel ? EDIT_LEVEL_LABELS[state.changeLevel] : "Chưa chạy";
+      $("#changeGroups").textContent = state.changeLog.length;
+      $("#changeTotal").textContent = total;
+      $("#changeBadge").textContent = total;
+      els.changeList.innerHTML = "";
+      if (!state.changeLog.length) {
+        els.changeList.innerHTML = '<div class="empty-state"><strong>Chưa có thay đổi tự động</strong>Chọn mức sửa và nhấn “Biên tập sâu”.</div>';
+      } else {
+        state.changeLog.forEach((item, index) => {
+          const card = document.createElement("article"); card.className = "change-card";
+          const icon = document.createElement("span"); icon.className = "change-icon"; icon.textContent = String(index + 1);
+          const body = document.createElement("div");
+          const title = document.createElement("h4"); title.textContent = item.title;
+          const description = document.createElement("p"); description.textContent = item.description;
+          body.append(title, description);
+          const count = document.createElement("strong"); count.textContent = `${item.count} lần`;
+          card.append(icon, body, count); els.changeList.append(card);
+        });
+      }
+      els.authorPromptList.innerHTML = "";
+      state.authorPrompts.forEach(prompt => {
+        const li = document.createElement("li"); li.textContent = prompt; els.authorPromptList.append(li);
+      });
+      els.authorPrompts.hidden = state.authorPrompts.length === 0;
+    }
+
+    function updateCounters() {
+      const inputStats = computeStats(els.input.value);
+      const outputStats = computeStats(els.output.value);
+      $("#inputCounter").textContent = `${inputStats.words.toLocaleString("vi-VN")} từ · ${inputStats.chars.toLocaleString("vi-VN")} ký tự · ${inputStats.paragraphs} đoạn`;
+      $("#outputCounter").textContent = `${outputStats.words.toLocaleString("vi-VN")} từ · ${outputStats.chars.toLocaleString("vi-VN")} ký tự · ${outputStats.paragraphs} đoạn`;
+      $("#inputReadTime").textContent = inputStats.readingMinutes ? `${inputStats.readingMinutes} phút đọc` : "0 phút đọc";
+      if (els.remember.checked) saveLocal();
+    }
+
+    function commonDiff(original, edited) {
+      if (!original && !edited) return { before: "Chưa có nội dung.", after: "Chưa có nội dung.", prefix: "", oldMiddle: "", newMiddle: "", suffix: "" };
+      let start = 0;
+      const min = Math.min(original.length, edited.length);
+      while (start < min && original[start] === edited[start]) start++;
+      let end = 0;
+      while (end < min - start && original[original.length - 1 - end] === edited[edited.length - 1 - end]) end++;
+      return {
+        prefix: original.slice(0, start),
+        oldMiddle: original.slice(start, original.length - end),
+        newMiddle: edited.slice(start, edited.length - end),
+        suffix: end ? original.slice(original.length - end) : ""
+      };
+    }
+
+    function appendText(parent, value) { parent.append(document.createTextNode(value)); }
+    function renderCompare() {
+      const original = els.input.value;
+      const edited = els.output.value;
+      els.compareOriginal.innerHTML = "";
+      els.compareEdited.innerHTML = "";
+      if (!original && !edited) {
+        els.compareOriginal.textContent = "Chưa có nội dung.";
+        els.compareEdited.textContent = "Chưa có nội dung.";
+        return;
+      }
+      const diff = commonDiff(original, edited);
+      appendText(els.compareOriginal, diff.prefix);
+      if (diff.oldMiddle) {
+        const mark = document.createElement("mark"); mark.className = "removed"; mark.textContent = diff.oldMiddle; els.compareOriginal.append(mark);
+      }
+      appendText(els.compareOriginal, diff.suffix);
+      appendText(els.compareEdited, diff.prefix);
+      if (diff.newMiddle) {
+        const mark = document.createElement("mark"); mark.className = "added"; mark.textContent = diff.newMiddle; els.compareEdited.append(mark);
+      }
+      appendText(els.compareEdited, diff.suffix);
+    }
+
+    function runAnalysis(showMessage = true) {
+      const text = els.output.value.trim() || els.input.value.trim();
+      if (!text) { toast("Hãy dán hoặc nhập văn bản trước khi phân tích."); els.input.focus(); return; }
+      const result = analyze(text);
+      state.issues = result.issues;
+      state.stats = result.stats;
+      state.analyzedText = text;
+      const score = qualityScore(result.issues, result.stats);
+      renderStats(result.stats, score);
+      renderIssues();
+      updateSummary();
+      renderCompare();
+      if (showMessage) toast(`Đã kiểm tra ${METHODS.length} tiêu chí: ${state.issues.length} nhóm cần xem lại.`);
+    }
+
+    function pushUndo() {
+      if (state.undoStack.at(-1) !== els.output.value) state.undoStack.push(els.output.value);
+      if (state.undoStack.length > 20) state.undoStack.shift();
+      $("#undoBtn").disabled = state.undoStack.length === 0;
+    }
+
+    function createSafeDraft() {
+      const source = els.input.value;
+      if (!source.trim()) { toast("Chưa có văn bản để dọn định dạng."); return; }
+      pushUndo();
+      const cleaned = removeDuplicateWords(safeClean(source));
+      els.output.value = cleaned;
+      state.lastGenerated = cleaned;
+      state.changeLevel = "";
+      state.changeLog = source === cleaned ? [] : [{ id: "technical", title: "Dọn lỗi kỹ thuật", description: "Chuẩn hóa Unicode, khoảng trắng, dấu câu và từ/cụm bị lặp.", count: 1 }];
+      state.authorPrompts = [];
+      renderChangeLog();
+      $("#outputState").textContent = source === cleaned ? "Không có lỗi kỹ thuật" : "Đã dọn định dạng";
+      updateCounters();
+      renderCompare();
+      runAnalysis(false);
+      const changed = source === cleaned ? "Không có lỗi định dạng an toàn cần sửa." : "Đã tạo bản làm việc và chỉ sửa lỗi kỹ thuật an toàn.";
+      toast(changed);
+    }
+
+    function createDeepDraft() {
+      const source = els.input.value;
+      if (!source.trim()) { toast("Chưa có văn bản để biên tập."); els.input.focus(); return; }
+      pushUndo();
+      const level = $("#editDepth").value;
+      const result = deepEdit(source, level);
+      els.output.value = result.text;
+      state.lastGenerated = result.text;
+      state.changeLog = result.logs;
+      state.changeLevel = result.level;
+      state.authorPrompts = result.prompts;
+      renderChangeLog();
+      updateCounters();
+      renderCompare();
+      runAnalysis(false);
+      $("#outputState").textContent = `Đã ${EDIT_LEVEL_LABELS[level].toLocaleLowerCase("vi")}`;
+      switchTab("changes");
+      const total = result.logs.reduce((sum, item) => sum + item.count, 0);
+      toast(total ? `Đã biên tập ${total} vị trí thuộc ${result.logs.length} nhóm; hãy đọc lại bản làm việc.` : "Không có mẫu phù hợp để tự sửa; hãy xem phần gợi ý.");
+    }
+
+    function toast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => els.toast.classList.remove("show"), 2600);
+    }
+
+    async function copyOutput() {
+      const value = els.output.value;
+      if (!value) { toast("Bản làm việc đang trống."); return; }
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(value);
+        else {
+          els.output.select();
+          const ok = document.execCommand("copy");
+          if (!ok) throw new Error("copy failed");
+          els.output.setSelectionRange(0, 0);
+        }
+        toast("Đã sao chép bản làm việc.");
+      } catch { toast("Không thể sao chép tự động. Hãy chọn văn bản và nhấn Ctrl+C."); }
+    }
+
+    function downloadBlob(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 800);
+    }
+
+    function exportReport() {
+      if (!state.stats) { toast("Hãy phân tích văn bản trước khi xuất báo cáo."); return; }
+      const score = qualityScore(state.issues, state.stats);
+      const report = {
+        app: "VietDraft Offline", version: "1.1.0", exportedAt: new Date().toISOString(),
+        note: "Điểm rõ ràng theo quy tắc; không phải xác suất AI và không xác định tác giả.",
+        statistics: { words: state.stats.words, sentences: state.stats.sentences, paragraphs: state.stats.paragraphs, averageWordsPerSentence: Number(state.stats.average.toFixed(2)), lexicalDiversity: Number(state.stats.diversity.toFixed(4)), clarityScore: score },
+        issues: state.issues
+      };
+      downloadBlob(JSON.stringify(report, null, 2), "vietdraft-bao-cao.json", "application/json;charset=utf-8");
+      toast("Đã xuất báo cáo JSON.");
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem("vietdraft-content", JSON.stringify({ input: els.input.value, output: els.output.value }));
+      } catch { /* Trình duyệt có thể chặn localStorage khi mở tệp. */ }
+    }
+
+    function loadLocal() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("vietdraft-content") || "null");
+        if (saved) { els.input.value = saved.input || ""; els.output.value = saved.output || ""; }
+      } catch { /* Bỏ qua dữ liệu cục bộ lỗi. */ }
+    }
+
+    function clearLocal() { try { localStorage.removeItem("vietdraft-content"); } catch {} }
+
+    function switchTab(name) {
+      $$(".tab-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === name));
+      $$(".tab-panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${name}`));
+      if (name === "compare") renderCompare();
+    }
+
+    function renderMethods() {
+      const grid = $("#methodGrid");
+      grid.innerHTML = "";
+      METHODS.forEach(([title, description], index) => {
+        const card = document.createElement("article"); card.className = "method-card";
+        const num = document.createElement("span"); num.className = "num"; num.textContent = String(index + 1).padStart(2, "0");
+        const h = document.createElement("h4"); h.textContent = title;
+        const p = document.createElement("p"); p.textContent = description;
+        card.append(num, h, p); grid.append(card);
+      });
+    }
+
+    function loadSample() {
+      const sample = `Trong bối cảnh hiện nay, công nghệ số đóng vai trò vô cùng quan trọng trong giáo dục. Có thể thấy rằng công nghệ công nghệ giúp giáo viên thực hiện việc đổi mới phương pháp một cách hiệu quả. Hơn nữa, các nền tảng trực tuyến hoàn toàn cải thiện kết quả học tập của mọi học sinh. Hơn nữa, các nền tảng này cũng tạo ra sự thuận tiện. Hơn nữa, điều này rất cần thiết.\n\nTheo khảo sát, 87% học sinh học tốt hơn khi sử dụng video nhưng kết quả này chưa nêu rõ cỡ mẫu và thời điểm khảo sát. Đây là một nhận định cần được xem xét trong điều kiện từng lớp học, năng lực số của giáo viên, hạ tầng thiết bị và mục tiêu của bài học.\n\nTóm lại, chuyển đổi số chắc chắn là giải pháp tốt nhất và không thể thiếu trong mọi trường hợp.`;
+      if (els.input.value.trim() && !confirm("Thay nội dung hiện tại bằng văn bản mẫu?")) return;
+      els.input.value = sample;
+      els.output.value = "";
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; renderChangeLog();
+      updateCounters();
+      toast("Đã nạp văn bản mẫu. Chọn Phân tích để xem kết quả.");
+    }
+
+    function initTheme() {
+      let theme = "light";
+      try { theme = localStorage.getItem("vietdraft-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch {}
+      document.documentElement.dataset.theme = theme;
+    }
+
+    function toggleTheme() {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem("vietdraft-theme", next); } catch {}
+    }
+
+    $("#importBtn").addEventListener("click", () => els.fileInput.click());
+    els.fileInput.addEventListener("change", async () => {
+      const file = els.fileInput.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast("Tệp vượt 5 MB. Hãy dùng tệp TXT/MD nhỏ hơn."); els.fileInput.value = ""; return; }
+      try {
+        const text = await file.text();
+        els.input.value = text;
+        els.output.value = "";
+        state.undoStack = []; state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; renderChangeLog();
+        updateCounters();
+        toast(`Đã nhập ${file.name}.`);
+      } catch { toast("Không đọc được tệp này."); }
+      els.fileInput.value = "";
+    });
+
+    $("#sampleBtn").addEventListener("click", loadSample);
+    $("#clearBtn").addEventListener("click", () => {
+      if ((els.input.value || els.output.value) && !confirm("Xóa toàn bộ văn bản gốc, bản làm việc và kết quả phân tích?")) return;
+      els.input.value = ""; els.output.value = ""; state.issues = []; state.stats = null; state.undoStack = [];
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = [];
+      clearLocal(); updateCounters(); updateSummary(); renderIssues(); renderStats(computeStats(""), null); renderCompare(); renderChangeLog();
+      $("#undoBtn").disabled = true; toast("Đã xóa nội dung trên thiết bị.");
+    });
+    $("#cleanBtn").addEventListener("click", createSafeDraft);
+    $("#rewriteBtn").addEventListener("click", createDeepDraft);
+    $("#analyzeBtn").addEventListener("click", () => runAnalysis(true));
+    $("#copyBtn").addEventListener("click", copyOutput);
+    $("#downloadBtn").addEventListener("click", () => {
+      if (!els.output.value) { toast("Bản làm việc đang trống."); return; }
+      downloadBlob(els.output.value, "vietdraft-ban-lam-viec.txt", "text/plain;charset=utf-8"); toast("Đã tải bản làm việc TXT.");
+    });
+    $("#exportReportBtn").addEventListener("click", exportReport);
+    $("#selectAllBtn").addEventListener("click", () => { els.input.focus(); els.input.select(); });
+    $("#undoBtn").addEventListener("click", () => {
+      if (!state.undoStack.length) return;
+      els.output.value = state.undoStack.pop(); state.lastGenerated = els.output.value;
+      state.changeLog = []; state.changeLevel = ""; state.authorPrompts = []; renderChangeLog();
+      $("#outputState").textContent = "Đã hoàn tác";
+      $("#undoBtn").disabled = state.undoStack.length === 0; updateCounters(); renderCompare(); toast("Đã hoàn tác bản làm việc.");
+    });
+
+    els.input.addEventListener("input", updateCounters);
+    els.output.addEventListener("input", () => {
+      updateCounters(); renderCompare();
+      if (state.lastGenerated && els.output.value !== state.lastGenerated) $("#outputState").textContent = "Đã chỉnh thủ công";
+    });
+    els.remember.addEventListener("change", () => {
+      if (els.remember.checked) { saveLocal(); toast("Đã bật lưu cục bộ trên thiết bị này."); }
+      else { clearLocal(); toast("Đã tắt và xóa bản lưu cục bộ."); }
+    });
+
+    $$(".tab-btn").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+    $$(".filter-btn").forEach(btn => btn.addEventListener("click", () => {
+      state.activeFilter = btn.dataset.filter;
+      $$(".filter-btn").forEach(x => x.classList.toggle("active", x === btn));
+      renderIssues();
+    }));
+
+    $("#themeBtn").addEventListener("click", toggleTheme);
+    $("#closeNotice").addEventListener("click", () => $("#notice").remove());
+    const modal = $("#aboutModal");
+    const openModal = () => { modal.classList.add("open"); $("#closeModal").focus(); };
+    const closeModal = () => { modal.classList.remove("open"); $("#aboutBtn").focus(); };
+    $("#aboutBtn").addEventListener("click", openModal);
+    $("#closeModal").addEventListener("click", closeModal);
+    $("#understoodBtn").addEventListener("click", closeModal);
+    modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && modal.classList.contains("open")) closeModal();
+      if (event.ctrlKey && event.shiftKey && event.key === "Enter") { event.preventDefault(); createDeepDraft(); }
+      else if (event.ctrlKey && event.key === "Enter") { event.preventDefault(); runAnalysis(true); }
+      if (event.ctrlKey && event.shiftKey && event.key.toLocaleLowerCase() === "c") { event.preventDefault(); copyOutput(); }
+    });
+
+    window.addEventListener("online", () => $("#privacyStatus").textContent = "Xử lý tại thiết bị");
+    window.addEventListener("offline", () => $("#privacyStatus").textContent = "Offline sẵn sàng");
+
+    initTheme();
+    renderMethods();
+    loadLocal();
+    updateCounters();
+    renderCompare();
+    renderChangeLog();
+  </script>
+</body>
+</html>
