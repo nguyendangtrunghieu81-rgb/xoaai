@@ -559,7 +559,7 @@
 
   <footer class="app-footer">
     <div class="footer-inner">
-      <span>VietDraft Offline 1.1 · Toàn bộ xử lý diễn ra trong trình duyệt</span>
+      <span>VietDraft Offline 1.2 · Toàn bộ xử lý diễn ra trong trình duyệt</span>
       <span>Không tải thư viện ngoài · Không gọi API · Không chấm “xác suất AI”</span>
     </div>
   </footer>
@@ -659,7 +659,20 @@
 
     function splitSentences(text) {
       if (!text.trim()) return [];
-      const protectedText = text.replace(/\b(?:PGS\.TS\.|ThS\.|TS\.|GS\.|BS\.|KS\.|TP\.|Q\.|P\.|v\.v\.|v\.d\.|Mr\.|Ms\.|Dr\.)/gi, m => m.replace(/\./g, "∯"));
+      const maskDots = value => value.replace(/\./g, "∯");
+      const maskToken = value => {
+        const tail = value.match(/[.,;:!?…]+$/)?.[0] || "";
+        const core = tail ? value.slice(0, -tail.length) : value;
+        return maskDots(core) + tail;
+      };
+      const protectedText = text
+        .replace(/https?:\/\/[^\s<>“”"']+/giu, maskToken)
+        .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, maskToken)
+        .replace(/\b(?:doi\s*:\s*)?10\.\d{4,9}\/[-._;()/:A-Z0-9]+/giu, maskToken)
+        .replace(/(?<=\d)\.(?=\d)/g, "∯")
+        .replace(/(?<![\p{L}\p{N}])(?:PGS\.TS\.|PGS\.|ThS\.|TS\.|GS\.|BS\.|KS\.|TP\.|Q\.|P\.|Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)(?!\p{L})/gu, maskDots)
+        .replace(/(?<![\p{L}\p{N}])(?:v\.v\.|v\.d\.|et al\.)(?!\p{L})/giu, maskDots)
+        .replace(/\b\p{Lu}\.(?=\s*\p{Lu}\.)/gu, maskDots);
       const matches = protectedText.replace(/\n+/g, " ").match(/[^.!?…]+(?:[.!?…]+(?:[”’"')\]]+)?)|[^.!?…]+$/g) || [];
       return matches.map(s => s.replace(/∯/g, ".").trim()).filter(s => words(s).length > 0);
     }
@@ -734,17 +747,22 @@
       return replaceEditable(text, /(^|[.!?…]\s+|\n+\s*)(\p{Ll})/gu, (match, lead, letter) => lead + letter.toLocaleUpperCase("vi")).text;
     }
 
+    function containsProtectedMeaning(sentence) {
+      return /```|`[^`\n]+`|“[^”]*”|"[^"\n]*"|https?:\/\/|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/u.test(sentence);
+    }
+
     function reduceRepeatedConnectors(text) {
       let count = 0;
       const connectorPattern = new RegExp(`^(${CONNECTORS.map(escapeRegExp).join("|")})[,;:]?\\s+`, "iu");
       const blocks = text.split(/(\n\s*\n)/);
       const output = blocks.map((block, blockIndex) => {
-        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block)) return block;
         const seen = new Map();
         const sentences = splitSentences(block);
         if (sentences.length < 2) return block;
         let blockChanged = false;
         const edited = sentences.map(sentence => {
+          if (containsProtectedMeaning(sentence)) return sentence;
           const hit = sentence.match(connectorPattern);
           if (!hit) return sentence;
           const key = hit[1].toLocaleLowerCase("vi");
@@ -764,11 +782,12 @@
       let count = 0;
       const blocks = text.split(/(\n\s*\n)/);
       const output = blocks.map((block, blockIndex) => {
-        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block)) return block;
         const sentences = splitSentences(block);
         if (sentences.length < 2) return block;
         let blockChanged = false;
         const edited = sentences.map((sentence, index) => {
+          if (containsProtectedMeaning(sentence)) return sentence;
           if (index === 0) return sentence;
           const previousFirst = words(sentences[index - 1])[0]?.toLocaleLowerCase("vi");
           const match = sentence.match(/^([\p{L}][\p{L}\s-]{0,45}?)\s+giúp\s+(.+)$/u);
@@ -789,12 +808,13 @@
       let count = 0;
       const blocks = text.split(/(\n\s*\n)/);
       const output = blocks.map((block, blockIndex) => {
-        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block)) return block;
         const sentences = splitSentences(block);
         let blockChanged = false;
         const edited = sentences.map(sentence => {
+          if (containsProtectedMeaning(sentence)) return sentence;
           if (words(sentence).length <= threshold) return sentence;
-          const candidates = [...sentence.matchAll(/(?:,\s+|\s+)(nhưng|tuy nhiên|vì vậy|do đó|đồng thời|mặt khác|ngoài ra|bên cạnh đó|trong khi)\s+/giu)];
+          const candidates = [...sentence.matchAll(/(?:,\s+|\s+)(nhưng|tuy nhiên|vì vậy|do đó|đồng thời|mặt khác|ngoài ra|bên cạnh đó|trong khi|qua đó|cho phép)\s+/giu)];
           if (candidates.length) {
             const middle = sentence.length / 2;
             const chosen = candidates.sort((a, b) => Math.abs(a.index - middle) - Math.abs(b.index - middle))[0];
@@ -802,7 +822,8 @@
             const starters = {
               "nhưng": "Tuy nhiên, ", "tuy nhiên": "Tuy nhiên, ", "vì vậy": "Vì vậy, ", "do đó": "Vì vậy, ",
               "đồng thời": "Đồng thời, ", "mặt khác": "Mặt khác, ", "ngoài ra": "Ngoài ra, ",
-              "bên cạnh đó": "Ngoài ra, ", "trong khi": "Trong khi "
+              "bên cạnh đó": "Ngoài ra, ", "trong khi": "Trong khi ", "qua đó": "Qua đó, ",
+              "cho phép": "Điều này cho phép "
             };
             const left = sentence.slice(0, chosen.index).trim().replace(/[,:;]+$/, "");
             const rightStart = chosen.index + chosen[0].length;
@@ -832,22 +853,70 @@
       return { text: output, count };
     }
 
-    function splitLongParagraphs(text, threshold) {
+    function reshapeAcademicStructures(text) {
       let count = 0;
       const blocks = text.split(/(\n\s*\n)/);
       const output = blocks.map((block, blockIndex) => {
-        if (blockIndex % 2 === 1 || words(block).length <= threshold || /(^|\n)\s*[-•*+]\s+/m.test(block) || /[“”"]|https?:\/\/|`/.test(block)) return block;
+        if (blockIndex % 2 === 1 || /(^|\n)\s*[-•*+]\s+/m.test(block)) return block;
+        const sentences = splitSentences(block);
+        let blockChanged = false;
+        const edited = sentences.map(sentence => {
+          if (containsProtectedMeaning(sentence)) return sentence;
+          let next = sentence;
+          next = next.replace(/^(.*?,\s*)([\p{L}][^,.!?]{1,70})\s+không chỉ là\s+(.+?)\s+mà còn là\s+(.+?)([.!?…])$/iu,
+            (match, lead, subject, firstRole, secondRole, punctuation) => `${lead}${subject} là ${firstRole}. Đồng thời, ${subject.toLocaleLowerCase("vi")} là ${secondRole}${punctuation}`);
+          next = next.replace(/^Năng lực\s+chính vì vậy mà\s+không thể hiện đơn thuần ở\s+(.+?)\s+mà ở\s+(.+?)([.!?…])$/iu,
+            (match, recalled, applied, punctuation) => `Vì vậy, năng lực không chỉ thể hiện qua ${recalled}. Điểm cốt lõi còn nằm ở ${applied}${punctuation}`);
+          next = next.replace(/^Hoạt động vận dụng khác với việc\s+(.+?)\s+vì học sinh phải\s+(.+?)([.!?…])$/iu,
+            (match, repetition, action, punctuation) => `Hoạt động vận dụng không dừng ở việc ${repetition}. Học sinh còn phải ${action}${punctuation}`);
+          if (next !== sentence) { count += 1; blockChanged = true; }
+          return next;
+        });
+        return blockChanged ? edited.join(" ") : block;
+      }).join("");
+      return { text: output, count };
+    }
+
+    function quoteBoundaryIsClosed(sentence, state) {
+      state.curly += (sentence.match(/“/g) || []).length - (sentence.match(/”/g) || []).length;
+      state.straight = (state.straight + (sentence.match(/(?<!\\)"/g) || []).length) % 2;
+      state.code = (state.code + (sentence.match(/(?<!`)`(?!`)/g) || []).length) % 2;
+      return state.curly <= 0 && state.straight === 0 && state.code === 0;
+    }
+
+    function reflowLongParagraphs(text, targetWords) {
+      let count = 0;
+      const blocks = text.split(/(\n\s*\n)/);
+      const output = blocks.map((block, blockIndex) => {
+        if (blockIndex % 2 === 1 || words(block).length <= targetWords * 1.25 || /(^|\n)\s*[-•*+]\s+/m.test(block) || /```/.test(block)) return block;
         const sentences = splitSentences(block);
         if (sentences.length < 4) return block;
-        const total = words(block).length;
-        let running = 0, cut = -1;
-        for (let i = 0; i < sentences.length - 1; i++) {
-          running += words(sentences[i]).length;
-          if (running >= total / 2) { cut = i + 1; break; }
+        const sentenceSizes = sentences.map(sentence => words(sentence).length);
+        const remainingFrom = Array(sentences.length + 1).fill(0);
+        for (let i = sentences.length - 1; i >= 0; i--) remainingFrom[i] = remainingFrom[i + 1] + sentenceSizes[i];
+        const groups = [], current = [];
+        const state = { curly: 0, straight: 0, code: 0 };
+        let running = 0;
+        sentences.forEach((sentence, index) => {
+          current.push(sentence);
+          running += sentenceSizes[index];
+          const safeBoundary = quoteBoundaryIsClosed(sentence, state);
+          const enoughCurrent = running >= targetWords;
+          const enoughRemaining = remainingFrom[index + 1] >= Math.round(targetWords * 0.55);
+          if (index < sentences.length - 1 && safeBoundary && enoughCurrent && enoughRemaining) {
+            groups.push(current.splice(0));
+            running = 0;
+          }
+        });
+        if (current.length) groups.push(current);
+        if (groups.length < 2) return block;
+        const lastWords = words(groups.at(-1).join(" ")).length;
+        if (groups.length > 2 && lastWords < targetWords * 0.45) {
+          const tail = groups.pop();
+          groups.at(-1).push(...tail);
         }
-        if (cut < 1 || cut >= sentences.length) return block;
-        count += 1;
-        return `${sentences.slice(0, cut).join(" ")}\n\n${sentences.slice(cut).join(" ")}`;
+        count += groups.length - 1;
+        return groups.map(group => group.join(" ")).join("\n\n");
       }).join("");
       return { text: output, count };
     }
@@ -879,6 +948,8 @@
       applyEditRule(ctx, "weak-verbs", "Dùng động từ trực tiếp", "Giảm cách diễn đạt vòng để câu gọn hơn.", /nhằm mục đích để/giu, "để", "balanced");
       applyEditRule(ctx, "wordy", "Gọn cụm từ dài", "Thay cụm nhiều danh từ bằng diễn đạt trực tiếp.", /tạo ra sự thuận tiện/giu, "giúp công việc thuận tiện hơn", "balanced");
       applyEditRule(ctx, "wordy", "Gọn cụm từ dài", "Thay cụm nhiều danh từ bằng diễn đạt trực tiếp.", /có (tác động|ảnh hưởng) đến/giu, (match, noun) => `${noun.toLocaleLowerCase("vi")} đến`, "balanced");
+      applyEditRule(ctx, "academic-verbs", "Làm rõ động từ học thuật", "Chuyển cụm danh hóa hoặc bị động quen thuộc sang động từ trực tiếp hơn.", /được hình thành,?\s*phát triển nhờ/giu, "hình thành và phát triển từ", "balanced");
+      applyEditRule(ctx, "academic-verbs", "Làm rõ động từ học thuật", "Chuyển cụm danh hóa hoặc bị động quen thuộc sang động từ trực tiếp hơn.", /huy động tổng hợp/giu, "kết hợp và vận dụng", "balanced");
 
       if (EDIT_LEVELS[level] >= EDIT_LEVELS.balanced) {
         const connectors = reduceRepeatedConnectors(ctx.text);
@@ -897,6 +968,18 @@
       applyEditRule(ctx, "scope", "Thu hẹp phạm vi khái quát", "Tránh mở rộng kết luận tới toàn bộ đối tượng khi văn bản chưa có bằng chứng tương ứng.", /mọi học sinh/giu, "nhiều học sinh", "deep");
       applyEditRule(ctx, "scope", "Thu hẹp phạm vi khái quát", "Tránh mở rộng kết luận tới toàn bộ đối tượng khi văn bản chưa có bằng chứng tương ứng.", /mọi trường hợp/giu, "nhiều trường hợp", "deep");
       applyEditRule(ctx, "comparison", "Giảm so sánh thiếu tiêu chí", "Thay so sánh nhất bằng nhận định không vượt quá bằng chứng hiện có.", /(?:tốt nhất|tối ưu nhất|hoàn hảo)/giu, "phù hợp", "deep");
+      applyEditRule(ctx, "academic-specificity", "Cụ thể hóa điều kiện", "Thay cách gọi trừu tượng bằng phạm vi điều kiện cụ thể hơn mà không thêm dữ kiện.", /trong những điều kiện xác định/giu, "trong từng điều kiện cụ thể", "deep");
+      applyEditRule(ctx, "academic-specificity", "Cụ thể hóa điều kiện", "Thay cách gọi trừu tượng bằng phạm vi điều kiện cụ thể hơn mà không thêm dữ kiện.", /trong một hoàn cảnh xác định/giu, "trong từng hoàn cảnh cụ thể", "deep");
+      applyEditRule(ctx, "academic-verbs", "Làm rõ động từ học thuật", "Chuyển cụm danh hóa hoặc bị động quen thuộc sang động từ trực tiếp hơn.", /thực hiện thành công một loại hoạt động/giu, "hoàn thành một hoạt động", "deep");
+      applyEditRule(ctx, "academic-verbs", "Làm rõ động từ học thuật", "Chuyển cụm danh hóa hoặc bị động quen thuộc sang động từ trực tiếp hơn.", /Vận dụng kiến thức,\s*kĩ năng đòi hỏi người học sử dụng những nguồn lực đã có/giu, "Để vận dụng kiến thức và kĩ năng, người học cần kết hợp những nguồn lực sẵn có", "deep");
+      applyEditRule(ctx, "citation-verbs", "Đa dạng động từ dẫn nguồn", "Giảm lặp động từ dẫn giải nhưng giữ nguyên tác giả, năm và nội dung quy chiếu.", /cũng chú trọng tới/giu, "cũng nhấn mạnh", "deep");
+      applyEditRule(ctx, "citation-verbs", "Đa dạng động từ dẫn nguồn", "Giảm lặp động từ dẫn giải nhưng giữ nguyên tác giả, năm và nội dung quy chiếu.", /cho thấy rằng/giu, "cho thấy", "deep");
+
+      if (level === "deep") {
+        const academicStructures = reshapeAcademicStructures(ctx.text);
+        ctx.text = academicStructures.text;
+        addChange(ctx, "academic-structure", "Đổi cấu trúc câu học thuật", "Tách cặp ý “không chỉ… mà còn…” và quan hệ giải thích dài thành các câu có trọng tâm rõ hơn.", academicStructures.count);
+      }
 
       if (EDIT_LEVELS[level] >= EDIT_LEVELS.balanced) {
         const sentenceResult = splitLongSentences(ctx.text, level === "deep" ? 22 : 34);
@@ -904,15 +987,37 @@
         addChange(ctx, "sentences", "Tách câu dài theo quan hệ ý", "Tách tại ranh giới đối chiếu, hệ quả hoặc bổ sung khi hai vế đều đủ ý.", sentenceResult.count);
       }
       if (level === "deep") {
-        const paragraphResult = splitLongParagraphs(ctx.text, 145);
+        const paragraphResult = reflowLongParagraphs(ctx.text, 130);
         ctx.text = paragraphResult.text;
-        addChange(ctx, "paragraphs", "Chia đoạn quá dài", "Tách đoạn gần ranh giới giữa hai cụm luận điểm, không cắt giữa câu.", paragraphResult.count);
+        addChange(ctx, "paragraphs", "Tổ chức lại đoạn quá dài", "Chia khối văn bản dài thành nhiều đoạn theo ranh giới câu, đồng thời giữ liền trích dẫn và nội dung được bảo vệ.", paragraphResult.count);
       }
 
       const finalized = capitalizeSentenceStarts(safeClean(ctx.text));
       if (finalized !== ctx.text) addChange(ctx, "finish", "Hoàn thiện câu và dấu", "Chuẩn hóa chữ đầu câu và khoảng cách sau khi biên tập.", 1);
       ctx.text = finalized;
-      return { text: ctx.text, logs: [...ctx.logs.values()], prompts: buildAuthorPrompts(source), level };
+      const logs = [...ctx.logs.values()];
+      const metrics = measureEditImpact(source, ctx.text, logs);
+      return { text: ctx.text, logs, prompts: buildAuthorPrompts(source), level, metrics, substantial: metrics.substantial };
+    }
+
+    function measureEditImpact(source, output, logs = []) {
+      const sourceWords = words(source).map(word => word.toLocaleLowerCase("vi"));
+      const outputWords = words(output).map(word => word.toLocaleLowerCase("vi"));
+      const span = Math.max(sourceWords.length, outputWords.length, 1);
+      let samePosition = 0;
+      for (let index = 0; index < Math.min(sourceWords.length, outputWords.length); index++) {
+        if (sourceWords[index] === outputWords[index]) samePosition += 1;
+      }
+      const sourceParagraphs = paragraphs(source).length;
+      const outputParagraphs = paragraphs(output).length;
+      const totalChanges = logs.reduce((sum, item) => sum + item.count, 0);
+      const wordDelta = Math.abs(outputWords.length - sourceWords.length);
+      const tokenChangeRatio = 1 - samePosition / span;
+      const changed = output !== source;
+      const substantial = changed && (
+        outputParagraphs > sourceParagraphs || totalChanges >= 2 || tokenChangeRatio >= 0.08 || wordDelta >= 3
+      );
+      return { sourceParagraphs, outputParagraphs, totalChanges, wordDelta, tokenChangeRatio, substantial };
     }
 
     function computeStats(text) {
@@ -1314,10 +1419,15 @@
       updateCounters();
       renderCompare();
       runAnalysis(false);
-      $("#outputState").textContent = `Đã ${EDIT_LEVEL_LABELS[level].toLocaleLowerCase("vi")}`;
       switchTab("changes");
       const total = result.logs.reduce((sum, item) => sum + item.count, 0);
-      toast(total ? `Đã biên tập ${total} vị trí thuộc ${result.logs.length} nhóm; hãy đọc lại bản làm việc.` : "Không có mẫu phù hợp để tự sửa; hãy xem phần gợi ý.");
+      if (result.substantial) {
+        $("#outputState").textContent = `Đã ${EDIT_LEVEL_LABELS[level].toLocaleLowerCase("vi")} · ${result.metrics.outputParagraphs} đoạn`;
+        toast(`Đã biên tập ${total} vị trí thuộc ${result.logs.length} nhóm; hãy đọc lại bản làm việc.`);
+      } else {
+        $("#outputState").textContent = total ? "Thay đổi rất ít · cần tự rà soát" : "Chưa có cấu trúc phù hợp để sửa";
+        toast(total ? "Mức thay đổi thực tế còn thấp nên công cụ không báo “đã sửa sâu”. Hãy xem gợi ý và tự rà soát." : "Không có mẫu phù hợp để tự sửa; hãy xem phần gợi ý.");
+      }
     }
 
     function toast(message) {
@@ -1354,7 +1464,7 @@
       if (!state.stats) { toast("Hãy phân tích văn bản trước khi xuất báo cáo."); return; }
       const score = qualityScore(state.issues, state.stats);
       const report = {
-        app: "VietDraft Offline", version: "1.1.0", exportedAt: new Date().toISOString(),
+        app: "VietDraft Offline", version: "1.2.0", exportedAt: new Date().toISOString(),
         note: "Điểm rõ ràng theo quy tắc; không phải xác suất AI và không xác định tác giả.",
         statistics: { words: state.stats.words, sentences: state.stats.sentences, paragraphs: state.stats.paragraphs, averageWordsPerSentence: Number(state.stats.average.toFixed(2)), lexicalDiversity: Number(state.stats.diversity.toFixed(4)), clarityScore: score },
         issues: state.issues

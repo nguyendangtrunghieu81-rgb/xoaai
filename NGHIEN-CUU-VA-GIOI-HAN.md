@@ -38,7 +38,7 @@ Mọi cảnh báo đều gắn với một quy tắc có thể hiểu được: 
 
 ## Cách chuyển các gợi ý trong tài liệu tham chiếu thành chức năng an toàn
 
-Các ảnh tham chiếu đề cập việc thay đổi nhịp câu, giảm khẳng định tuyệt đối, sửa câu mở/kết, đổi chủ thể và thêm trải nghiệm cụ thể. Phiên bản 1.1 triển khai phần có thể tự động hóa mà không bịa nội dung:
+Các ảnh tham chiếu đề cập việc thay đổi nhịp câu, giảm khẳng định tuyệt đối, sửa câu mở/kết, đổi chủ thể và thêm trải nghiệm cụ thể. Phiên bản 1.2 triển khai phần có thể tự động hóa mà không bịa nội dung:
 
 - bỏ các mở đầu như “Trong bối cảnh hiện nay”, “Có thể thấy rằng”;
 - giảm sáo ngữ như “đóng vai trò vô cùng quan trọng”, “một cách hiệu quả”;

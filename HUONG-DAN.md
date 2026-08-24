@@ -1,4 +1,4 @@
-# VietDraft Offline 1.1
+# VietDraft Offline 1.2
 
 VietDraft Offline là công cụ biên tập tiếng Việt chạy hoàn toàn trong trình duyệt. Công cụ không gọi API, không nạp thư viện ngoài và không gửi văn bản lên máy chủ.
 
@@ -51,6 +51,10 @@ Các thay đổi về lập luận, giọng văn, mức độ khẳng định, t
 - **Sửa sâu:** thực hiện toàn bộ bước trên, đồng thời đổi nhịp câu mở đầu khi có cấu trúc phù hợp, giảm khẳng định tuyệt đối, thu hẹp khái quát thiếu bằng chứng, giảm so sánh nhất và chia đoạn quá dài.
 
 Biên tập sâu không chèn ngẫu nhiên từ đồng nghĩa. Mỗi thay đổi thuộc một quy tắc xác định và được ghi lại trong thẻ **Nhật ký sửa**. Nội dung đặt trong dấu nháy, URL và đoạn mã được bảo vệ khỏi các phép sửa ngữ nghĩa.
+
+Phiên bản 1.2 xử lý cấu trúc theo từng câu thay vì bỏ qua cả đoạn khi đoạn có trích dẫn, URL hoặc dấu nháy. Một khối văn bản dài sẽ được tổ chức lại thành nhiều đoạn khoảng 130 từ tại ranh giới câu an toàn. Các viết tắt, số thập phân, email, DOI và URL được che tạm khi xác định ranh giới câu để tránh tách nhầm.
+
+Nhãn **Đã sửa sâu** chỉ xuất hiện khi đầu ra có thay đổi thực chất, chẳng hạn có nhiều phép sửa, có thay đổi cấu trúc đủ lớn hoặc một đoạn quá dài đã được chia lại. Nếu thuật toán chỉ sửa rất ít hoặc không tìm thấy cấu trúc phù hợp, trạng thái sẽ nói rõ để người dùng không hiểu nhầm.
 
 Khi gặp số liệu hoặc lời kể trải nghiệm, công cụ chỉ tạo câu hỏi xác minh. Nó không tự thêm nguồn, cỡ mẫu, cuộc phỏng vấn, quan sát hoặc câu chuyện cá nhân.
 
